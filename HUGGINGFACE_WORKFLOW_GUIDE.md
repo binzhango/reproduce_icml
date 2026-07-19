@@ -6,19 +6,111 @@ as a model download site:
 1. **Hugging Face Jobs** supplied managed CPU/GPU compute.
 2. **Hub repositories and Buckets** preserved code, predictions, checkpoints,
    and summaries after the temporary Job container stopped.
-3. **Spaces** published Gradio demos and Trackio experiment dashboards.
+3. **Trackio Logbook** organized commands, findings, figures, artifacts, and
+   claim verdicts, then published them as static Hugging Face Spaces.
 
 The useful mental model is:
 
 ```text
-local script -> HF Job -> durable Hub repo/Bucket -> Space or Trackio dashboard
-                     \-> Job URL and logs
+local script -> HF Job -> durable Hub repo/Bucket -> Trackio Logbook Space
+                     \-> Job URL and logs            \-> artifact Bucket
 ```
 
 A Job is temporary compute. A model, dataset, or Space repository is versioned
-storage. A Bucket is mutable object storage. A Space is a running application.
-Keeping these roles separate makes a run easier to reproduce and much harder to
-lose.
+storage. A Bucket is mutable object storage. A Space is a hosted application or
+static site. Keeping these roles separate makes a run easier to reproduce and
+much harder to lose.
+
+## Trackio Logbook: the Space application used by this repository
+
+You will not find a Gradio `app.py` in the reproduction workspaces. The
+published application is the **Trackio Logbook itself**. Trackio scaffolds a
+small static web application under `.trackio/logbook/`, and `trackio logbook
+publish` creates a Hugging Face Space from those files. The generated Space
+card declares `sdk: static`, so Hugging Face serves `index.html`; there is no
+Python web server or Gradio dependency.
+
+A Logbook is a Hub-native laboratory notebook for an experiment campaign. It
+serves two audiences from the same source files:
+
+- humans browse a static Space containing claim pages, code/output cells,
+  figures, artifact links, and a resource sidebar;
+- agents use `trackio logbook read` to retrieve a compact structured view
+  without scraping the rendered website.
+
+The minimal lifecycle is:
+
+```bash
+cd repro_PAPER_ID
+
+# Create .trackio/logbook locally. Nothing is uploaded yet.
+trackio logbook open --title "Repro - PAPER TITLE" --no-serve
+
+# Create a page and append a finding.
+trackio logbook page "Baseline"
+trackio logbook cell markdown \
+  "The baseline completed; exact-match was 0.41." \
+  --page "Baseline"
+
+# Prefer this wrapper for experiments: it records the command, script/config
+# inputs, terminal output, exit code, duration, and output-file references.
+trackio logbook run --page "Baseline" -- \
+  uv run evaluate.py --output-dir outputs/baseline
+
+# Inspect both reader interfaces before publication.
+trackio logbook read
+trackio logbook serve
+
+# First publication creates a PUBLIC static Space and enables autosync.
+trackio logbook publish USER/repro-PAPER_ID
+
+# Use --private on the first publish for sensitive work instead.
+# trackio logbook publish USER/repro-PAPER_ID --private
+
+# Push changes made by directly editing the Logbook files.
+trackio logbook sync
+```
+
+The first publish writes the chosen Space ID and privacy state to
+`.trackio/metadata.json`. Later `page`, `cell`, and `run` commands auto-sync;
+direct file edits require `trackio logbook sync`. A first publish is public by
+default and happens immediately, so check for tokens, private paths, private
+datasets, and unredacted examples before running it.
+
+The generated layout looks like this:
+
+```text
+repro_PAPER_ID/.trackio/
+├── metadata.json              # Space ID, privacy, autosync, artifact Bucket
+└── logbook/
+    ├── README.md              # HF Space card with `sdk: static`
+    ├── index.html             # static application entry point
+    ├── logbook.js
+    ├── logbook.css
+    ├── logbook.json           # structured page tree
+    └── pages/
+        ├── index.md           # table of contents only
+        ├── baseline/page.md
+        └── conclusion/page.md
+```
+
+For a concrete example, `repro_32495/.trackio/metadata.json` records the Space
+`binzhango/repro-investigating-component-contributions`, while
+`repro_32495/.trackio/logbook/README.md` declares `sdk: static`. In other words,
+the `logbook/` directory you found **is the local source of the Space**.
+
+Trackio Logbooks connect, but do not conflate, three resource types:
+
+1. `trackio.init()` / `trackio.log()` record time-series metrics. When a local
+   Logbook exists, Trackio can add an embedded dashboard cell automatically.
+2. `trackio.log_artifact()` records a real artifact. Publishing promotes local
+   artifacts to the associated HF Bucket and rewrites their Logbook links.
+3. `trackio logbook run` records path-reference artifact cells for detected
+   output files, but it does **not** upload those files. Use
+   `trackio.log_artifact()` for files that must travel with the publication.
+
+The repository-specific Trackio implementation is covered in more depth under
+[Section 7: How Trackio is used in this repository](#7-how-trackio-is-used-in-this-repository).
 
 ## What worked in this repository
 
@@ -499,7 +591,12 @@ Models, datasets, and Spaces mount read-only; Buckets can mount read/write.
 Promote the final checkpoint from the Bucket to a versioned model repository
 when the run is complete.
 
-## 6. Publish a Gradio Space in minutes
+## 6. Optional: publish a custom Gradio Space
+
+This repository's reproduction workspaces use the static Trackio Logbook flow
+described above. The following is an independent example for readers who need a
+custom interactive UI. It is not a file layout that currently exists in this
+repository.
 
 Create a folder called `space/` with three files.
 
