@@ -1,0 +1,27 @@
+{
+  "claim1_proxy_supported": false,
+  "claim2_proxy_supported": true,
+  "coordination_delta_mean": -0.0010526894489158506,
+  "coordination_delta_std": 0.0031580683467475517,
+  "hardware": "Tesla T4",
+  "iteration_gain_mean": 0.0007761951833213562,
+  "iteration_gain_std": 0.0015503102314546717,
+  "mean_scores": {
+    "multi_agent": 0.970130468671021,
+    "single_iterative": 0.9711831581199368,
+    "single_no_feedback": 0.9704069629366155
+  },
+  "model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+  "multi_agent_helps": 0,
+  "multi_agent_hurts": 1,
+  "multi_agent_ties": 8,
+  "n_task_seed_pairs": 9,
+  "rounds": 3,
+  "scope_label": "scaled-proxy",
+  "tasks": [
+    "breast_cancer",
+    "wine",
+    "digits"
+  ],
+  "wall_time_seconds": 708.963506937027
+}

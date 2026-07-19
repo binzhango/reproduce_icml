@@ -1,0 +1,2455 @@
+                                                                      ML-Agent: Reinforcing LLM Agents for
+                                                                     Autonomous Machine Learning Engineering
+
+
+                                               Zexi Liu 1 2 * Jingyi Chai 1 2 * Xinyu Zhu 1 Shuo Tang 1 Rui Ye 1 Bo Zhang 2 Lei Bai 2 † Siheng Chen 1 †
+
+
+                                                                  Abstract                                      architectures, tuning parameters, and iteratively refining
+                                               The emergence of large language model (LLM)-                     models through trial and error (Bergstra & Bengio, 2012).
+                                                                                                                This challenge has sparked an ambitious vision of au-
+
+
+
+
+arXiv:2505.23723v2 [cs.CL] 30 Apr 2026
+                                               based agents has significantly advanced the devel-
+                                               opment of autonomous machine learning (ML) en-                   tonomous ML: building autonomous AI systems that in-
+                                               gineering. However, the dominant prompt-based                    dependently orchestrate the entire ML lifecycle, from con-
+                                               paradigm exhibits limitations: smaller models                    ceptual design and code implementation to refinement.
+                                               lack the capacity to learn from execution trajec-                Fortunately, the advent of LLM-based agents, equipped
+                                               tories for generalization, while large proprietary               with capabilities of interaction (Du et al., 2023; Pang et al.,
+                                               models incur high computational overhead, re-                    2024), coding (Hong et al., 2023; Qian et al., 2023; Hu et al.,
+                                               stricting accessibility and scalability. Focusing on             2024) and tool-calling (Masterman et al., 2024), has pro-
+                                               this, for the first time, we explore the paradigm                pelled us significantly closer to realizing this vision (Agentic
+                                               of learning-based agentic ML, where an LLM                       ML) (Huang et al., 2023; Chan et al., 2024). Unlike tradi-
+                                               agent learns through interactive experimentation                 tional automated ML with pre-defined limited search and
+                                               on ML tasks using online reinforcement learning                  action spaces (Tang et al., 2024; LeDell & Poirier, 2020;
+                                               (RL). To realize this, we propose a novel agentic                Jin et al., 2023), these LLM agents, when provided with
+                                               ML training framework with three key compo-                      instructions in natural language, can autonomously propose
+                                               nents: (1) exploration-enriched fine-tuning, which               effective actions, generate executable codes, and iteratively
+                                               enables LLM agents to generate diverse actions                   improve solutions based on environmental feedback (Huang
+                                               for enhanced RL exploration; (2) step-wise RL,                   et al., 2023; Jiang et al., 2025). For example, AIDE (Jiang
+                                               which enables training on a single action step, ac-              et al., 2025) and ML-Master (Liu et al., 2025a) both lever-
+                                               celerating experience collection and improving                   age LLM agents together with experimental environments
+                                               training efficiency; (3) an agentic ML-specific re-              to automate ML process.
+                                               ward module, which unifies varied ML feedback
+                                               signals into consistent rewards for RL optimiza-                 Currently, the dominant paradigm in agentic ML relies on
+                                               tion. Leveraging this framework, we train ML-                    prompt-based design, where agents are constructed through
+                                               Agent, driven by a 7B-sized Qwen-2.5 LLM for                     heuristic prompt engineering. This approach offers practical
+                                               autonomous ML. Despite training on only 9 ML                     advantages, as it allows rapid deployment without parameter
+                                               tasks, our 7B-sized ML-Agent achieves compara-                   updates or extensive retraining. However, it also exhibits
+                                               ble performance to agents using much larger pro-                 notable limitations: when driven with smaller language mod-
+                                               prietary LLMs (e.g., GPT-5) but at significantly                 els, such agents lack the capacity to learn from and inter-
+                                               lower computational cost, demonstrating strong                   nalize execution trajectories, causing limited generalization
+                                               performance and cross-task generalization.                       across diverse tasks; conversely, when implemented with
+                                                                                                                large-scale proprietary models, the paradigm incurs sub-
+                                                                                                                stantial computational overhead and resource consumption,
+                                         1. Introduction                                                        thereby restricting accessibility and undermining sustain-
+                                                                                                                able scalability (Belcak et al., 2025).
+                                         Machine Learning (ML) engineering is a critical yet labor-
+                                         intensive process, requiring expert researchers to invest sig-         To address these limitations, we propose moving beyond
+                                         nificant time—potentially days or even months—designing                the prompt-based paradigm toward a new research trajec-
+                                                                                                                tory: learning-based agentic ML. In this paradigm, agents
+                                           *
+                                            Equal contribution 1 Shanghai Jiao Tong University 2 Shanghai       are no longer constrained to static prompt instructions but
+                                         AI Laboratory. Correspondence to: Lei Bai <bailei@pjlab.org.cn>,       instead learn adaptively from task-solving trajectories via
+                                         Siheng Chen <sihengc@sjtu.edu.cn>.                                     reinforcement learning (RL). Such a formulation empowers
+                                         Preprint.                                                              agents to systematically explore diverse strategies, accumu-
+
+                                                                                                            1
+                     ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+late knowledge across successive runs, and progressively                • We introduce a new paradigm for autonomous
+refine their decision-making processes (Xiong et al., 2024).              ML: learning-based agentic ML, where an LLM agent
+Importantly, this learning-based approach endows even rela-               learns through interactive experimentation on ML tasks
+tively small language models with the capacity to achieve                 via reinforcement learning.
+strong generalization, while substantially reducing compu-              • We propose a novel training framework for agentic ML,
+tational and resource demands. As a result, it opens a more               which incorporates three technical designs: exploration-
+accessible, efficient, and sustainable path for advancing the             enriched fine-tuning, step-wise RL, and agentic ML-
+frontier of autonomous machine learning.                                  specific rewards.
+While being straightforward, employing RL to train au-                  • Extensive experiments show that despite training on only
+tonomous ML agents poses three key challenges. (1) Lim-                   9 ML tasks, our 7B-sized ML-Agent surpasses agents
+ited exploration: agents often propose similar actions for                driven by much larger LLMs and even matches agents
+the same ML task across runs, leading to narrow exploration               driven by proprietary LLMs (e.g., GPT-5) with much
+trajectories in RL (Park et al., 2024). (2) Slow experience               lower cost.
+collection: ML experiments can take minutes to hours, mak-
+ing RL data gathering inefficient and thus limiting feedback-          2. Related Work
+driven training samples (Chan et al., 2024). (3) Complex
+reward design: agentic ML involves various outcomes, such              Autonomous Machine Learning. Autonomous machine
+as task-specific metrics, out-of-memory failures, and com-             learning aims to automate the manual and expertise-
+pilation errors. This requires a unified reward function to            intensive aspects of machine learning, including data pre-
+reconcile varied feedback signals (Eschmann, 2021).                    processing, model selection and hyperparameter tuning. Au-
+                                                                       tonomous machine learning has evolved from classical hy-
+In response to these challenges, we propose a novel agentic            perparameter and pipeline search to agentic frameworks
+ML training framework, the first designed to train LLM                 powered by large language models. Classical autonomous
+agents for autonomous ML engineering using RL. This                    machine learning frameworks focus on automating model se-
+framework enables agents to explore diverse ML trajecto-               lection, hyperparameter optimization, and pipeline construc-
+ries, collect rewards efficiently, and iteratively enhance their       tion within a fixed search space (Tang et al., 2024; Olson &
+capabilities through learned experience. (1) To improve ex-            Moore, 2016; Feurer et al., 2022; Mohr et al., 2018; Erick-
+ploration diversity, we introduce exploration-enriched fine-           son et al., 2020; Liu et al., 2020). For example, AutoGluon-
+tuning, generating a diverse action pool from fast-executable          Tabular (Erickson et al., 2020) ensembles multiple models
+ML tasks to finetune agents for broader RL exploration. (2)            and stackings to deliver state-of-the-art performance on
+To accelerate experience collection, we design a step-wise             tabular data with minimal user effort. These classical au-
+RL paradigm, evaluating atomic actions using expert trajec-            tonomous machine learning works remain constrained by
+tories as single-step queries, significantly boosting training         predefined search spaces and static configurations, lacking
+efficiency. (3) To tackle reward design, we develop an agen-           the adaptability and continuous learning capabilities.
+tic ML-specific reward module that dynamically handles
+errors (e.g., runtime failures) and quantifies performance             LLM Agents in Autonomous Machine Learning. Re-
+via normalized, task-specific metrics (e.g., accuracy gains).          cent advancements in LLMs have empowered them to au-
+                                                                       tonomously generate and refine machine learning solutions,
+By leveraging our proposed agentic ML training frame-                  opening new possibilities in machine learning. Methods
+work, we train ML-Agent, an agent driven by a 7B-sized                 such as AutoML-GPT (Zhang et al., 2023b) and MLCopi-
+Qwen2.5 LLM for autonomous ML. During training, our                    lot (Zhang et al., 2023a) prompt LLMs to automate the
+ML-Agent can efficiently explore the environment, learn                entire machine learning pipeline, where MLCopilot intro-
+from experience, and achieve continuous performance im-                duces past experience retrieval to help decision-making.
+provement through iterative exploration across various ML              AIDE (Jiang et al., 2025) and ML-Master (Liu et al., 2025a)
+tasks. Surprisingly, despite its modest size and training on           focus on optimizing the ML engineering process through
+only 9 ML tasks, ML-Agent demonstrates strong perfor-                  iterative search and refinement strategies. Other works like
+mance and cross-task generalization, outperforming 671B-               AutoKaggle (Li et al., 2024) and AutoML-Agent (Trirat
+sized DeepSeek-R1 agent on 3 held-in and 10 held-out tasks             et al., 2024) employ a multi-agent framework to address ML
+across diverse data modalities and objectives. Notably, it             problems. However, these approaches are fundamentally
+achieves results comparable to agents using the most ad-               constrained by a prompt-based paradigm. While agents may
+vanced proprietary LLMs (GPT-5) but at significantly lower             leverage past experience, their underlying models are not
+computational cost.                                                    trained on these interaction histories. Consequently, their
+In summary, our work makes the following significant con-              problem-solving strategies remain static and rely on costly
+tributions to the field:                                               advanced models. This limitation motivates our shift toward
+
+
+                                                                   2
+                        ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+a learning-based paradigm where agents adapt and improve                        LLM’s parameters within the agent and n is the trajectory
+over time.                                                                      length. The goal is to maximize the expected trajectory
+                                                                                reward:
+Reinforcement Learning for LLMs. Reinforcement learn-
+                                                                                                   J (θ) = Eτ ∼πθ [R(τ )] ,               (1)
+ing (RL) significantly enhances the ability of LLMs, partic-
+ularly in preference alignment and complex reasoning (Xu                        where the reward function R(τ ) denotes the cumulative
+et al., 2025; Wang et al., 2024; Zheng et al., 2023). By                        reward over the entire trajectory.
+facilitating exploration and exploitation, RL trains LLMs to
+adapt and improve their policy based on feedback, thus re-                      Challenges. Although the formulation of agentic ML is rel-
+fining their performance in dynamic environments. One line                      atively straightforward, employing RL to train LLM agents
+of work is preference optimization (Kaufmann et al., 2023),                     for autonomous machine learning poses several key chal-
+with methods such as Reinforcement Learning from Human                          lenges, including: (1) Limited exploration. Agents often
+Feedback (RLHF)(Ouyang et al., 2022). RL is also uti-                           repeat similar actions across episodes, narrowing their ex-
+lized to train LLMs for complex reasoning tasks (Guo et al.,                    ploration and limiting their ability to discover innovative
+2025a; Liu et al., 2025b). Another line of research involves                    ML solutions. (2) Slow experience collection. ML experi-
+training LLM agents for specific tasks using RL (Zhang                          ments can take minutes to hours, slowing down the online
+et al., 2025). For example, IPR (Xiong et al., 2024) and                        data collection process for RL training. (3) Complex re-
+AgentQ (Putta et al., 2024) use DPO (Rafailov et al., 2023)                     ward design. Agentic ML produces varied outcomes (e.g.,
+to iteratively refine their policy. While StarPO (Wang et al.,                  execution results or resource errors), making it challenging
+2025) discusses the multi-turn reinforcement learning con-                      to design a unified reward function that effectively guides
+sidering episode-wise reward. However, applying RL to                           the agent. The subsequent section presents our agentic ML
+train LLM agents for autonomous machine learning remains                        training framework designed to overcome these challenges,
+unexplored.                                                                     with the overall architecture illustrated in Figure 1.
+
+
+3. Problem Setup and Preliminaries                                              4. Agentic ML Training Framework
+Problem Formulation. Agentic ML leverages an LLM                                Our agentic ML training framework is designed to train
+agent to autonomously orchestrate the ML lifecycle by in-                       LLM agents for autonomous machine learning. As shown
+teracting with the experimental environment. This environ-                      in Figure 1, it comprises three key steps for effective learn-
+ment includes editable task-related code files together with                    ing. First, exploration-enriched fine-tuning builds a diverse
+an interpreter executing code and provides explicit experi-                     action pool to enhance RL exploration. Second, a step-
+mental feedback (e.g., code execution results or error mes-                     wise RL paradigm uses expert trajectories as single-step
+sages). Given an initial ML task specification (e.g., dataset                   queries to accelerate experience collection in RL. Third, an
+description and evaluation metric), the agent begins inter-                     agentic ML-specific reward module handles errors and quan-
+acting with the environment to iteratively refine its solution.                 tifies agentic ML task-specific performance. These steps
+At each step, the agent takes actions (e.g., add BN layers                      sequentially enable diverse exploration, efficient training,
+in the model architecture) and receives feedback (e.g., code                    and unified feedback, enabling agents to iteratively improve
+execution output or error messages) from the environment.                       agentic ML performance across varied ML tasks.
+This loop continues until a step or time limit is reached. We
+follow the action space from prior work (Huang et al., 2023)                    4.1. Exploration-enriched fine-tuning
+(The details are provided in Table 5).                                          In agentic ML, limited exploration hinders autonomous
+Agentic ML as a MDP. We format agentic ML as a                                  machine learning workflows. Agents often repeat similar
+Markov Decision Process (MDP) M = (S, A, P), where                              actions (e.g., small code edits) across episodes, leading to
+S is the state space, A the action space and P the state                        narrow exploration and preventing the discovery of innova-
+transition dynamics. Let the environment feedback at                            tive architectures or optimization strategies.
+time t be ft ∈ F, where F denotes the feedback space.                           To address this, we introduce exploration-enriched fine-
+We employ a history-based state representation st =                             tuning with an automated data collection pipeline. It orga-
+(s0 , a0 , f0 , a1 , f1 , . . . , at−1 , ft−1 ) to capture richer contex-       nizes ML optimization strategies into 3 semantic categories:
+tual information from past feedback, in which s0 encodes                        data, model and learning. For each category, an LLM gener-
+the initial ML task specification and each pair (ai , fi ) rep-                 ates a large set of candidate ideas and an embedding-based
+resents the agent’s action and corresponding environment                        diversity filter selects a compact and diverse pool. During
+feedback. The agent policy πθ generates an action at ∈ A                        trajectory generation, the system automatically samples 1–3
+conditioned on current state st , forming a trajectory of in-                   categories, shuffles their order, and draws one idea from
+teractions τ = (s0 , a0 , s1 , . . . , an−1 , sn ). Note that θ is the          each corresponding pool to form the initial action sequence
+
+                                                                            3
+                                                          �|
+                                                                                                                                    ① rollout next action �~�� (�)
+                                                                 expert
+                                                       .|
+                                                       1 ..
+                                                                                                                                    ② obtain reward � = �(�, �)
+                                   diverse idea                 ① rollout next action �~�� (�)
+                                                                ② obtain reward � = �(�, �)
+                         ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+                                         Collected Trajectories                                             States Pool   Agentic ML-specific                        provide dive
+              9 Tasks
+                                                                                                                                                                       initial idea
+                         task                      action                                                                      Reward
+
+                                                                                                   ......          ...
+              ...                                               env.                                                      score format corner
+                                                                                                                                        case
+
+
+                                                                           sampling
+                        prompt            expert feedback
+                        diverse                                                                                   action �
+                        actions     rse                                                    state
+                                  dive
+                                                        ...                                                               env.
+                                                                                                             reward �
+                                                 trajectories                                ① Rollout only one step              ② Update
+
+
+                                    Exploration-enriched
+                                         Finetuning                                                    Step-wise RL Training
+
+Figure 1. Overview of the agentic ML training framework, introducing (1) exploration-enriched fine-tuning for diverse action pool
+creation, (2) a step-wise RL paradigm for efficient experience collection using expert trajectories, and (3) an agentic ML-specific reward
+module for various ML feedback handling and task-specific performance evaluation.
+                                                                                                                                                                     24/12/5
+
+
+(See Appendix B.1). An expert LLM with policy πe then                                     πθ and the state transition dynamics P; see Appendix A
+executes the full workflow on fast-executable ML tasks, pro-                              for details. The time-consuming components in equation 3
+                                       |D|
+ducing expert trajectories D = {τ (i) }i=1 . We fine-tune the                             include: 1) dπθ (st ), which involves multiple state transi-
+agent policy πθ via supervised fine-tuning (SFT):                                         tion dynamics from st to st+1 , and 2) R(st , at ), where the
+                                                                                          reward is determined based on feedback from the environ-
+          LSFT (θ) = −Eτ ∼D [log Pπθ (τ |s0 )]                                            ment (e.g., code execution platform). Since dπθ (·) relies on
+                                                                                          πθ , the trajectory sampling process operates repeatedly in
+                            " n−1                 #
+                                  Y
+                   = −Eτ ∼D log       πθ (at |st )                                        standard RL training, making the computational cost even
+                                                 t=0                           (2)        higher. However, using dπθ to sample state distribution is
+                                          n−1
+                                           X                                             not necessary for two reasons: 1) πθ poorly aligns with the
+                    = −Eτ ∼D                     log πθ (at |st ) .                       environment format during the early stage of RL training,
+                                          t=0                                             hindering effective state exploration; 2) Once πθ can inter-
+This exploration-enriched fine-tuning approach preserves                                  act properly with the environment, the set of states it could
+action format compliance while enabling agents to learn                                   explore tends to vary only slightly as πθ updates. Hence,
+diverse strategies, significantly broadening the exploration                              we sample the states from a states pool according to a fixed
+scope in subsequent RL.                                                                   expert distribution dπe (st ), which forms the step-wise ob-
+                                                                                          jective function             "                           #
+4.2. Step-wise RL paradigm                                                                               X
+                                                                                                                πe
+                                                                                                                         X            
+                                                                                            Jstep (θ) =        d (st )        πθ at st R(st , at )
+Objective. Due to the time-consuming nature of AI experi-                                                st ∈S          at ∈A                        (4)
+ments, directly applying RL methods (e.g., PPO) is imprac-                                           = Est ∼dπe ,at ∼πθ (·|st ) [R(st , at )] .
+tical, as sampling a single trajectory during rollout takes                               This objective function Jstep (θ) reformulates multi-step tra-
+hours. To address this issue, we propose a step-wise RL ap-                               jectory RL into step-wise training. This reformulation offers
+proach that reformulates the objective function equation 1,                               two advantages: 1) The state sampling process is decoupled
+where we sample only a single step of action during the                                   from the RL of the model. This allows us to directly sample
+rollout phase instead of the entire trajectory. This approach                             states from a pre-collected set and avoids expensive online
+extensively reduces the computational cost of the rollout                                 sampling during training, significantly reducing the overall
+phase and makes the overall training process more efficient.                              training time. 2) The state sampling process is performed be-
+Specifically, we expand equation 1 into steps according to                                fore RL training, rather than during the rollout phase. This
+the state distribution dπθ (s):                                                           enables us to perform extensive sampling from the expert
+                                   "                                   #                  distribution, making training more scalable.
+            n−1
+            X X                          X
+                         πθ                              
+  J (θ) =               d (st )                πθ at st R(st , at ) ,          (3)        Training approach. Based on the step-wise RL formula-
+            t=0 st ∈S                  at ∈A                                              tion, our goal is to maximize the expected reward R(st , at )
+where R(st , at ) is the step-wise reward at time t, and dπθ (·)                          shown in equation 4 according to the state distribution dπe
+is the state distribution at time t under policy πθ . This dis-                           and πθ . This aligns with the approach used in RLVR meth-
+tribution can be calculated recursively based on the policy                               ods (Guo et al., 2025b), where the policy represents a token
+
+                                                                                      4
+                        ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+generation process and R(st , at ) is the outcome reward of                     continuous improvement across diverse ML tasks.
+πθ (at |st ). Hence, any RL training approach can be ap-
+plied to this objective Jstep (θ). For our implementation, we                   5. Experiments
+choose PPO (Schulman et al., 2017) as the training algo-
+rithm because of its widespread use and proven effective-                       5.1. Experimental setups
+ness. Specifically, suppose we expand the token generating
+                                                                                Training. For training data collection, we adopt a
+process of πθ (at |st ), our PPO loss function can be defined
+                                                                                GPT-4o-mini-driven (OpenAI, 2024) agent scaffolded by
+as follows:
+                                                                                MLAB (Huang et al., 2023) to interact with the MLAgent-
+                                    "                                           Bench environment and generate expert trajectories. Collect-
+   PPO                                         πθ (oi | s, o<i )
+ Jstep (θ) = Es∼de ,o≤i ∼πθold (·|s) min                           Âi ,        ing step-wise expert trajectories for autonomous ML agents
+                                              πθold (oi | s, o<i )
+                                                            ! !#                is computationally expensive, as each trajectory requires
+                          πθ (oi | s, o<i )                                     executing a full ML pipeline, including data preprocess-
+                 clip                         , 1 − ε, 1 + ε Âi       ,
+                         πθold (oi | s, o<i )                                   ing, model training, and evaluation. Under a fixed compute
+                                                                      (5)       budget, we therefore prioritize fast-executable tasks while
+where oi is the ith token of at and Âi is an estimator of the                  maintaining broad coverage of heterogeneous ML settings.
+advantage at the token generation step i.                                       Specifically, we collect 10k expert trajectories across 9 ML
+                                                                                tasks, comprising 4 tasks from MLAgentBench and 5 from
+4.3. Agentic ML-specific reward                                                 MLE-Bench (Chan et al., 2024). These tasks jointly span
+                                                                                multiple data modalities (image, tabular, text, and graph),
+Having enabled efficient RL for agentic ML via the step-                        task types (classification and regression), and evaluation
+wise RL paradigm, the next crucial step is to convert the                       metrics (e.g., accuracy, AUC, log-loss, and MAE), aiming
+varied feedback into a unified, meaningful reward. While                        to balance computational feasibility with exposure to diverse
+numerical metrics like validation accuracy or loss naturally                    and realistic ML pipelines rather than optimizing for any
+serve as RL rewards, non-numerical feedback, such as com-                       single benchmark. Each trajectory is limited to 15 steps and
+pilation errors or out-of-memory failures, must be carefully                    30 minutes of runtime. Additional data collection details
+incorporated to ensure the reward is coherent.                                  are provided in Appendix B. For exploration-enhanced fine-
+To address this, we propose an agentic ML-specific re-                          tuning, we train Qwen2.5-7B (Yang et al., 2024) using these
+ward module that dynamically processes these diverse sig-                       10k expert trajectories via supervised fine-tuning (SFT). For
+nals while quantifying performance improvements through                         step-wise RL, we select 10k states sampled from expert
+scaled task-specific metrics. The key idea is to translate                      trajectories to further train the SFT model using Proximal
+every execution outcome into a unified scalar value. Define                     Policy Optimization (PPO). All training is conducted on 8
+Avalid as valid actions, Aedit ⊂ Avalid as editing actions for                  A100 GPUs. The fine-tuning stage runs for 2 epochs with a
+ML code, Ferror as error feedback (e.g., compilation fail-                      learning rate of 2e − 5, while the RL stage runs for 1 epoch
+ures), Fcorner as corner cases (e.g., resource exhaustion), and                 with an actor learning rate of 1e − 6 and a critic learning rate
+Fsuccess as successful executions. Let mt be the task-specific                  of 1e − 5. See additional training details in Appendix C.1.
+metric1 at state st (e.g., loss or accuracy), with minit and                    Importantly, our training procedure does not rely on any
+mbest as the baseline and best human-achievable scores.                         special property of these selected tasks and can be directly
+The reward R(st , at ) is:                                                      scaled to more tasks given additional computational bud-
+                                                                               get. We study the effect of the number of training tasks in
+             −1
+                               , if at ∈
+                                        / Avalid or ft ∈ Ferror
+                                                                                Section 5.3.
+R(st , at ) = 0                 , if at ∈ Avalid /Aedit or ft ∈ Fcorner
+              mt+1 −mt
+             
+                                , if at ∈ Aedit and ft ∈ Fsuccess .             Testing. To verify the generalization ability of ML-Agent
+               mbest −minit
+                                                                    (6)         across ML tasks, we evaluate on 10 held-out tasks from
+This reward module handles all possible agentic ML sce-                         MLE-Bench that are never seen during training. Due to
+narios: (1) Invalid actions or errors receive -1 to penalize                    the high computational cost of running full autonomous
+faulty outputs; (2) Valid non-editing actions or corner cases                   ML pipelines, we do not exhaustively evaluate on the entire
+receive 0 as a neutral acknowledgment of legitimacy while                       benchmark. Instead, we select a representative subset of
+recognizing external constraints; (3) Success edits yield a                     unused tasks that cover diverse ML pipelines and evaluation
+scaled metric improvement for task-driven refinement. By                        metrics, including settings that are generally more chal-
+unifying penalties for errors, neutrality for non-editing ac-                   lenging than the training tasks. These held-out tasks span
+tions, and task-driven rewards for edits, the module provides                   heterogeneous input modalities and task formulations, such
+consistent, informative feedback for iterative refinement and                   as image, text, tabular, time series, audio, and multi-modal
+    1                                                                           settings, as well as different evaluation criteria (e.g., RMSE,
+      We follow the official Kaggle evaluation protocol which de-
+fines a scalar metric for each ML tasks.                                        log-loss, MAP@K, and quadratic weighted kappa). Details
+
+                                                                            5
+                        ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+Table 1. Comparing 7B ML-Agent with baselines across different agent frameworks driven by proprietary/open-source LLMs on 3
+ held-in tasks (included in training) and 10 held-out tasks (unseen during training) from MLE-bench. For each task, we report average
+performance gain (%) over 8 trajectories. The best open-source LLM-driven agent performance is marked in bold.
+
+ Method      Model                 #Params      cifar10          house           feedback          denoising             leaf                  statoil             whale
+                                                                     Prompt-Based Method
+             Qwen2.5-7B-Instruct     7B       1.37 ± 7.98      0.23 ± 0.43       1.39 ± 3.42      2.10 ± 40.99      2.52 ± 14.85          −6.32 ± 8.68         12.25 ± 31.63
+             Qwen3-235B             235B      57.61 ± 7.35     3.01 ± 1.53       6.70 ± 3.98     62.60 ± 11.12      −2.12 ± 1.97         −16.36 ± 16.38        26.68 ± 45.31
+             DeepSeek-R1            671B     28.96 ± 23.63     3.45 ± 2.16       5.53 ± 5.10       8.83 ± 3.36      4.85 ± 12.01          0.04 ± 4.08          33.44 ± 45.96
+ MLAB
+             GPT-5                  N/A      61.46 ± 36.20    12.15 ± 4.10      12.74 ± 4.08     66.00 ± 25.14     −45.63 ± 116.99        −6.43 ± 5.71         89.59 ± 31.34
+             Gemini-2.5-Pro         N/A      16.78 ± 29.14     1.16 ± 2.06       0.10 ± 0.00     37.85 ± 31.02      −4.38 ± 7.99          −4.26 ± 5.48         22.38 ± 37.13
+             Qwen2.5-7B-Instruct     7B      11.36 ± 16.97     2.42 ± 2.49       7.52 ± 5.66      7.33 ± 12.94      −4.75 ± 2.95         −4.33 ± 10.71           0.52 ± 0.43
+             Qwen3-235B             235B     −0.10 ± 2.71      2.04 ± 2.12      11.10 ± 6.76     41.65 ± 16.38       4.75 ± 16.08        −2.89 ± 4.31           8.26 ± 20.27
+ AIDE        DeepSeek-R1            671B      72.55 ± 1.99     5.35 ± 2.43      13.07 ± 2.98     33.23 ± 22.78     −10.25 ± 18.29        −4.54 ± 4.99          30.77 ± 36.23
+             GPT-5                  N/A       76.53 ± 8.08    22.15 ± 4.72       8.77 ± 9.44     77.38 ± 10.77      31.50 ± 23.20        −9.18 ± 10.99         26.42 ± 35.38
+             Gemini-2.5-Pro         N/A      53.59 ± 31.32    11.13 ± 6.56       9.44 ± 3.27     62.72 ± 22.94     −84.25 ± 223.17       −6.08 ± 8.29          56.45 ± 42.00
+             Qwen2.5-7B-Instruct     7B      1.03 ± 1.49       0.00 ± 0.00     0.10 ± 0.00         2.44 ± 6.23       −1.38 ± 0.00         −3.99 ± 7.06          1.12 ± 0.49
+ ML-Master   DeepSeek-R1            671B     73.43 ± 1.71     18.25 ± 5.92    12.07 ± 0.04        14.56 ± 7.21      −14.75 ± 35.32        −2.78 ± 4.72         33.39 ± 34.94
+             GPT-5                  N/A      71.64 ± 6.34      22.3 ± 4.37   10.54 ± 12.27       10.96 ± 27.28      23.88 ± 20.12         −2.48 ± 5.23         67.07 ± 19.30
+                                                                    Learning-Based Method
+ ML-Agent(Ours)                      7B      33.80 ± 11.27    6.77 ± 3.47       13.47 ± 2.36     52.38 ± 10.07      13.87 ± 20.39         1.41 ± 8.16          72.89 ± 24.43
+
+
+Method       Model                 #Params        learning          detecting           spooky                 jigsaw               us                   tabular      Avg.
+                                                                    Prompt-Based Method
+             Qwen2.5-7B-Instruct      7B        1.23 ± 1.11        0.51 ± 0.43       −0.46 ± 3.94       −0.06 ± 0.15             3.75 ± 2.82       0.04 ± 0.06        1.43
+             Qwen3-235B              235B       0.30 ± 2.53        1.02 ± 1.53        0.80 ± 1.55        0.01 ± 0.03             1.96 ± 2.19      −0.07 ± 0.26       10.93
+             DeepSeek-R1             671B       0.05 ± 0.89        0.25 ± 0.25        0.89 ± 1.81        0.00 ± 0.00             2.67 ± 2.56      −0.13 ± 0.59        6.83
+MLAB
+             GPT-5                   N/A        4.36 ± 2.40       11.20 ± 8.41        6.79 ± 7.56        0.00 ± 0.00            23.38 ± 4.64       0.23 ± 0.02       18.14
+             Gemini-2.5-Pro          N/A        0.00 ± 0.00        0.13 ± 0.00        0.04 ± 0.02        0.00 ± 0.00             0.13 ± 0.36       0.00 ± 0.00        5.38
+             Qwen2.5-7B-Instruct      7B       −9.78 ± 30.17     −0.38 ± 1.45         0.07 ± 0.00       0.01 ± 0.01          0.00 ± 0.00            0.08 ± 0.09       0.77
+             Qwen3-235B              235B       2.37 ± 3.08       0.43 ± 0.70         0.96 ± 2.36      −12.15 ± 21.06        0.51 ± 3.74            0.00 ± 0.00       4.38
+AIDE         DeepSeek-R1             671B       1.38 ± 0.63       0.31 ± 0.92         0.36 ± 0.78       0.01 ± 0.04          5.78 ± 3.05            0.14 ± 0.07      11.40
+             GPT-5                   N/A        4.51 ± 2.96       0.13 ± 0.00         4.25 ± 6.74       0.14 ± 0.21         29.69 ± 12.44           0.11 ± 0.10      20.95
+             Gemini-2.5-pro          N/A        7.35 ± 0.60       0.74 ± 1.76         4.34 ± 7.51       0.04 ± 0.04         31.92 ± 28.18           0.13 ± 0.14      11.35
+             Qwen2.5-7B-Instruct      7B        1.79 ± 0.00       0.26 ± 0.29        −0.04 ± 0.00       −0.02 ± 0.04        −0.02 ± 0.00            0.00 ± 0.00       0.10
+ML-Master    DeepSeek-R1             671B       3.03 ± 3.29       0.00 ± 0.00         4.01 ± 4.70       −0.04 ± 0.10        29.27 ± 22.65           0.22 ± 0.10      13.13
+             GPT-5                   N/A        6.38 ± 1.17       0.79 ± 2.09        10.41 ± 7.10        0.35 ± 0.31        26.49 ± 3.20            0.25 ± 0.10      19.12
+                                                                   Learning-Based Method
+ ML-Agent(Ours)                       7B        1.91 ± 1.24       1.74 ± 0.97         1.76 ± 5.39        0.01 ± 0.04            12.96 ± 8.16        0.20 ± 0.02      16.40
+
+
+
+of these tasks are provided in Appendix B.2. During testing,                         5.2. Main results
+the MLAgentBench environment settings remain consistent
+                                                                                     We conduct extensive experiments to evaluate the perfor-
+with those used in training. To comprehensively assess the
+                                                                                     mance of ML-Agent, a learning-based LLM agent trained
+LLM agent’s ability in autonomous ML, we propose Perfor-
+                                                                                     through our proposed framework for autonomous ML. Our
+mance gain ∆r , the relative improvement over the initial
+                            m     −minit                                             results demonstrate that ML-Agent achieves strong and con-
+script, defined as ∆r = β avg@8 minit    where mavg@8 is the
+                                                                                     sistent performance across both held-in and held-out tasks,
+mean score over 8 trajectories, minit is the initial script’s
+                                                                                     and exhibits continuous performance improvements during
+score, and β ∈ {−1, 1} adjusts for metrics (e.g. MAE,
+                                                                                     RL training.
+RMSE) to ensure positive ∆r indicates improvement.
+                                                                                     ML-Agent achieves superior performance across both
+Baselines. To provide a comprehensive comparison, we
+                                                                                     held-in and held-out tasks. We compare ML-Agent with 5
+evaluate ML-Agent against 3 prompted-based agentic ML
+                                                                                     powerful LLM-based agents in 3 scaffolds across 3 held-in
+methods: MLAB (Huang et al., 2023), AIDE (Jiang et al.,
+                                                                                     and 10 held-out tasks. As shown in Table 1, ML-Agent
+2025), and ML-Master (Liu et al., 2025a). All agents
+                                                                                     significantly outperforms other large open-source models,
+are tested using a diverse set of backbone LLMs, span-
+                                                                                     such as the 671B DeepSeek-R1. For closed-source GPT-5,
+ning small-scale open-source models (e.g., Qwen2.5-7B-
+                                                                                     our agent remains remarkably competitive. Notably, despite
+Instruct (Yang et al., 2024)), medium-scale models (e.g.,
+                                                                                     being trained on only 9 tasks, ML-Agent delivers top-tier
+Qwen3-235B (Yang et al., 2025)), large-scale open-source
+                                                                                     results across all 10 held-out tasks, demonstrating strong
+models (e.g., DeepSeek-R1 (Guo et al., 2025b)), and state-
+                                                                                     generalization and effective learning from limited experi-
+of-the-art proprietary LLMs (Gemini-2.5-Pro (Comanici
+                                                                                     ence.
+et al., 2025) and GPT-5 (OpenAI, 2025)). We keep the same
+time limit and number of ML code modifications for a fair                            ML-Agent efficiently achieves good performance with
+comparison between agents with different scaffolds.                                  much lower cost. As illustrated in Figure 2, we plot the
+
+                                                                                 6
+                     ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+                                                                                                 Qwen-7B-Instruct        GPT-4o                ML-Agent
+                                                                                                 Qwen-32B-Instruct       DeepSeek-R1           ML-Agent
+                                                                                                 GPT-4o-mini                                   (w/o step-wise)
+                                                                                                         Performance in Held-in Tasks
+
+
+
+                                                                      Avg. Perf. Gain (%)
+                                                                                            15
+              ours                                                                          10
+                                                                                             5
+
+                                                                                                 0        2          4      6          8           10
+                                                                                                               GPU Time (hour)
+                                                                                                         Performance in Held-out Tasks
+
+
+
+                                                                      Avg. Perf. Gain (%)
+                                                                                            15
+                                                                                            10
+                                                                                             5
+                                                                                             0
+                                                                                                 0        2          4      6          8           10
+                                                                                                                GPU Time (hour)
+Figure 2. Comparison of average performance gain (%) vs. cost          Figure 3. ML-Agent achieves continuous performance improve-
+($) across different models and scaffolds on 10 held-out tasks.        ments; Step-wise RL (evaluated every 5 steps) is more efficient
+Our ML-Agent significantly outperforms other baselines with a          than episode-wise RL (standard PPO, evaluated every 1 step) on
+competitive gain at a lower cost.                                      both held-in and held-out tasks.
+
+average performance gain against the average cost per tra-             Table 2. Ablation study of ML-Agent on held-in and held-out ML
+jectory for various agents. Our proposed ML-Agent (the                 tasks. We report the average performance gain (%) for each task.
+star) is a clear outlier, positioned in the optimal top-left
+                                                                                                                                       Held-in          Held-out
+corner. It achieves highly competitive performance gain of                        Method
+                                                                                                                                        Tasks            Tasks
+over 15% while maintaining an exceptionally low cost of
+                                                                                  ML-Agent                                                 18.01         15.91
+less than 0.01$ per trajectory. In contrast, baseline agents
+                                                                                   w/o Exploration-enriched fine-tuning                    -0.66         -6.20
+like MLAB using powerful models such as GPT-5 incur                                w/o Step-wise RL                                        10.71         2.86
+costs that are more than 20 times higher for similar or even                       w/o Agentic ML-specific reward                          9.77          -1.65
+lower performance. This result highlights the significant
+efficiency of learning-based paradigm, proving it can pro-
+duce a state-of-the-art agent without relying on expensive,
+large-scale models. See detailed cost in Appendix C.4.                  highlighting its critical role in providing a diverse action
+                                                                        initialization. Furthermore, agents trained without step-wise
+ML-Agent achieves continuous performance improve-                       RL (episode-wise RL) exhibit poor generalization, achiev-
+ments. Figure 3 shows that ML-Agent demonstrates con-                   ing only 2.86% average gains in held-out tasks. In contrast,
+sistent performance improvement across both held-in and                 our full framework achieves the highest performance gain
+held-out tasks as training progresses. This highlights the              at both held-in and held-out tasks, confirming that these
+effectiveness of our step-wise RL paradigm and exploration-             components are essential for successful autonomous ML
+enriched fine-tuning in enabling continuous learning from               engineering.
+ML environmental feedback, ultimately allowing ML-Agent
+to outperform all baseline methods.                                    Effectiveness of step-wise RL training. To improve train-
+                                                                       ing efficiency and scalability, we propose a step-wise RL
+                                                                       approach that samples single states from expert trajectories
+5.3. Ablation Study and Analysis
+                                                                       and evaluates atomic actions. To validate this, we imple-
+Ablations on our proposed training framework. We per-                  ment an alternative episode-wise RL approach using stan-
+form a comprehensive ablation study to assess the contribu-            dard PPO, where the policy rolls out the entire trajectory
+tion of each module in our proposed framework, as summa-               from the task description during data collecting phase in RL.
+rized in Table 2. The results indicate that all three module           Both methods are initialized from the same ML-Agent-SFT
+designs are indispensable for optimal performance. For ex-             model and trained for 39 steps. We measure GPU time every
+ample, removing exploration-enriched fine-tuning leads to              5 steps for step-wise RL and 1 step for episode-wise RL.
+a collapse in performance, with the average gain dropping              As shown in Figure 3, step-wise RL adapts more quickly
+to -0.66% in held-in tasks and -6.20% in held-out tasks,               and achieves faster performance gains on both held-in and
+
+                                                                  7
+                                               ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+                                  Held-in Tasks                    Held-out Tasks
+                      18                                                              18
+                      15
+                                                                                      15                                                                                   Performance on Different Tasks
+
+
+Avg. Perf. Gain (%)                                             Avg. Perf. Gain (%)
+                                                                                      12
+                      12                                                               9                                                                            17.5          Held-in Tasks
+                                                                                       6                                                                            15.0          Held-out Tasks
+
+
+
+                                                                                                                                              Avg. Perf. Gain (%)
+                       9                                                               3
+                                                                                             N/A
+                       6                                                               0
+                                                                                       3
+                                                                                                                                                                    12.5
+                       3                                                               6                                                                            10.0
+                       0 N/A                                                           9
+                       3 Qwen-7B Qwen-7B Qwen-7b ML-Agent
+                                                                                      12                                                                             7.5
+                                                                                           Qwen-7B Qwen-7B Qwen-7b ML-Agent
+                          -Distill -Base -Instruct -SFT                                     -Distill -Base -Instruct -SFT                                            5.0
+                                 Base Model of RL                                                   Base Model of RL
+                                                                                                                                                                     2.5
+           (a) Held-in tasks                 (b) Held-out tasks                                                                                                      0.0
+                                                                                                                                                                           0           3           6         9
+    Figure 4. Exploration-enriched fine-tuning is crucial for RL train-                                                                                                        Number of RL Training Tasks
+    ing. "N/A" means the training based on the model fails to generate
+    valid results.                                                                                                                Figure 5. Effects of training task number on RL performance.
+                                                                                                                                  Expanding the number of ML tasks during RL not only refines the
+    Table 3. Ablation study on the designs of ML-specific reward                                                                  agent’s ability on familar tasks but also significantly improves the
+    module: (1) normalized performance reward (Rperf. ), (2) format                                                               agent’s ability to generalize across unseen tasks.
+    reward (Rformat ), and (3) corner cases reward (Rcorner ). Results in-
+    dicates the necessity of each reward design. We report the average
+    performance gain (%) for each task.                                                                                           lation studies in Table 3 show each reward component is
+                              Task
+                                                                                                                                  essential: (1) Performance(Rperf. ): Replacing the scaled
+                                             cifar10 house feedback leaf detecting us tabular whale
+                      Rperf. Rformat Rcorner                                                                                      performance difference with binary reward leads to notice-
+                       %     !      !    17.58   3.94    7.79         4.75                   0.26    6.40 -24.96    23.24         able performance drops. This confirms that fine-grained
+                       !     %      !    10.98   6.17    8.34       -30.25                   0.03     6.27 -12.54    2.84
+                       !     !      %    13.56   6.64    7.67         8.50                   0.58    8.67 -0.48     28.06
+                                                                                                                                  reward signals are more informative for learning meaning-
+                       !     !      !    33.80   6.77   13.47        13.87                   1.74    12.96 0.20     72.89         ful improvements. (2) Format(Rformat ): Removing format
+                                                                                                                                  constraints causes the largest degradation (e.g., -11.75%
+                                                                                                                                  on cifar-10), emphasizing the necessity of syntactic and
+     held-out tasks, while the performance of episode-wise RL                                                                     semantic correctness of agent’s output format. (3) Corner
+     improves slowly and incurs much higher time cost. These                                                                      cases(Rcorner ): Disabling the neutral reward for corner cases
+     results demonstrate that step-wise RL not only improves                                                                      has minimal impact due to their rarity, but improves training
+     training efficiency by avoiding expensive online rollouts,                                                                   stability by preventing over-penalization of non-fatal issues.
+     but also leads to improved performance through targeted                                                                      In summary, each component of the reward module plays a
+     single-step updates.                                                                                                         distinct and complementary role: Rperf. drives performance
+                                                                                                                                  improvement, Rformat. ensures actions validity, and Rcorner
+    Effectiveness of exploration-enriched fine-tuning. To val-
+                                                                                                                                  maintains robustness under real-world limitations. Together,
+    idate the efficacy of exploration-enriched fine-tuning in en-
+                                                                                                                                  they form a coherent and comprehensive reward structure
+    hancing subsequent RL training, we replace our exploration-
+                                                                                                                                  during RL training for agentic ML.
+    enriched fine-tuned model (ML-Agent-SFT) with Qwen2.5-
+    7B (Qwen-7B-Base), Qwen2.5-7B-Instruct (Qwen-7B-                                                                              Effects of task numbers in RL. We investigate the impact
+    Instruct), and DeepSeek-R1-Distill-Qwen-7B (Guo et al.,                                                                       of using different numbers of ML tasks (0, 3, 6, 9) during
+    2025b)(Qwen-7B-Distill) as base models for the RL train-                                                                      step-wise RL training, where the "0 task" condition cor-
+    ing. We evaluate the average performance gain of the result-                                                                  responds to ML-Agent-SFT. We evaluate performance in
+    ing RL-trained agents on held-in and held-out tasks (Fig-                                                                     terms of average performance gain on held-in and held-out
+    ure 4). The agent trained from Qwen-7B-Distill fails to                                                                       tasks. As shown in Figure 5, performance on both task
+    generate valid actions due to distillation-induced format is-                                                                 types improves monotonically as the number of ML tasks
+    sues, resulting in ineffective learning. The agent trained                                                                    increases during RL training. Specifically, training with
+    from Qwen-7B-Base shows overall performance degrada-                                                                          3, 6, and 9 ML tasks using step-wise RL lifts the average
+    tion from limited instruction-following capabilities. The                                                                     performance gain on held-out tasks from nearly 0% to ap-
+    agent trained from Qwen-7B-Instruct achieves +13% gains                                                                       proximately 3%, 6%, and 16%, respectively. These results
+    on held-in tasks but -12% on held-out tasks, indicating poor                                                                  indicate that expanding the diversity of ML tasks during
+    generalization. In contrast, the agent trained from our ML-                                                                   RL not only refines the agent’s ability on familar tasks but
+    Agent-SFT achieves +18% and +16% improvement on held-                                                                         also significantly improves the agent’s ability to generalize
+    in and held-out tasks, respectively, with greater action di-                                                                  across unseen tasks.
+    versity during autonomous ML experimentation (Figure 7).
+                                                                                                                                  Case study. To provide an intuitive understanding, we
+    These results confirm that exploration-enriched fine-tuning
+                                                                                                                                  present several examples in the Appendix C.5, demon-
+    promotes format-compliant, diverse actions, enhancing ex-
+                                                                                                                                  strating task specifications, initial code implementations,
+    ploration and generalization in step-wise RL.
+                                                                                                                                  baseline and our model’s execution trajectories. These
+     Effectiveness of agentic-ML specific reward module. Ab-                                                                      demonstrate that our methodology: (1) generates diverse
+
+                                                                                                                              8
+                    ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+action sequences through comprehensive reasoning, (2) au-          Impact Statement
+tomatically initiates backtracking mechanisms when perfor-
+mance metrics remain unimproved by proposed modifica-              This paper presents work whose goal is to advance the field
+tions, and (3) maintains operational effectiveness on novel        of machine learning. There are many potential societal
+tasks through generalized reasoning capabilities.                  consequences of our work, none which we feel must be
+                                                                   specifically highlighted here.
+
+6. Conclusion
+                                                                   References
+In this paper, we propose a training framework for an LLM-
+                                                                   Belcak, P., Heinrich, G., Diao, S., Fu, Y., Dong, X., Mu-
+based agent on autonomous machine learning tasks. Unlike
+                                                                     ralidharan, S., Lin, Y. C., and Molchanov, P. Small lan-
+heuristic prompt-based methods, our method enables agents
+                                                                     guage models are the future of agentic ai, 2025. URL
+to learn from task-solving experiences, iteratively refine
+                                                                     https://arxiv.org/abs/2506.02153.
+strategies, and generalize across tasks. The framework in-
+volved exploration-enriched fine-tuning, efficient step-wise       Bergstra, J. and Bengio, Y. Random search for hyper-
+RL training, and agentic ML-specific reward module. Exten-           parameter optimization. The journal of machine learning
+sive experiments demonstrate that ML-Agent, powered by               research, 13(1):281–305, 2012.
+a 7B-parameter LLM, surpasses agents using 671B models
+                                                                   Chan, J. S., Chowdhury, N., Jaffe, O., Aung, J., Sherburn,
+and delivers performance comparable to proprietary mod-
+                                                                     D., Mays, E., Starace, G., Liu, K., Maksin, L., Patward-
+els like GPT-5 at much lower computational cost. This
+                                                                     han, T., et al. Mle-bench: Evaluating machine learning
+suggests that equipping smaller, open-weight LLM-driven
+                                                                     agents on machine learning engineering. arXiv preprint
+agents with the capacity to learn from experience offers a
+                                                                     arXiv:2410.07095, 2024.
+scalable and effective alternative to proprietary models for
+autonomous Machine Learning.                                       Comanici, G., Bieber, E., Schaekermann, M., Pasupat, I.,
+                                                                     Sachdeva, N., Dhillon, I., Blistein, M., Ram, O., Zhang,
+                                                                     D., Rosen, E., et al. Gemini 2.5: Pushing the frontier
+                                                                     with advanced reasoning, multimodality, long context,
+                                                                     and next generation agentic capabilities. arXiv preprint
+                                                                     arXiv:2507.06261, 2025.
+                                                                   Du, Y., Li, S., Torralba, A., Tenenbaum, J. B., and Mordatch,
+                                                                     I. Improving factuality and reasoning in language models
+                                                                     through multiagent debate. In Forty-first International
+                                                                     Conference on Machine Learning, 2023.
+                                                                   Erickson, N., Mueller, J., Shirkov, A., Zhang, H., Larroy,
+                                                                     P., Li, M., and Smola, A. Autogluon-tabular: Robust
+                                                                     and accurate automl for structured data. arXiv preprint
+                                                                     arXiv:2003.06505, 2020.
+                                                                   Eschmann, J. Reward function design in reinforcement
+                                                                     learning. Reinforcement learning algorithms: Analysis
+                                                                     and Applications, pp. 25–33, 2021.
+                                                                   Feurer, M., Eggensperger, K., Falkner, S., Lindauer, M., and
+                                                                     Hutter, F. Auto-sklearn 2.0: Hands-free automl via meta-
+                                                                     learning. arxiv 2020. arXiv preprint arXiv:2007.04074,
+                                                                     2022.
+                                                                   Guo, D., Yang, D., Zhang, H., Song, J., Zhang, R., Xu, R.,
+                                                                     Zhu, Q., Ma, S., Wang, P., Bi, X., et al. Deepseek-r1: In-
+                                                                     centivizing reasoning capability in llms via reinforcement
+                                                                     learning. arXiv preprint arXiv:2501.12948, 2025a.
+                                                                   Guo, D., Yang, D., Zhang, H., Song, J., Zhang, R., Xu, R.,
+                                                                     Zhu, Q., Ma, S., Wang, P., Bi, X., et al. Deepseek-r1: In-
+                                                                     centivizing reasoning capability in llms via reinforcement
+                                                                     learning. arXiv preprint arXiv:2501.12948, 2025b.
+
+                                                               9
+                    ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+Hong, S., Zheng, X., Chen, J., Cheng, Y., Wang, J., Zhang,            Technologies, pp. 142–150, Portland, Oregon, USA, June
+  C., Wang, Z., Yau, S. K. S., Lin, Z., Zhou, L., et al.              2011. Association for Computational Linguistics. URL
+  Metagpt: Meta programming for multi-agent collabora-                https://aclanthology.org/P11-1015/.
+  tive framework. arXiv preprint arXiv:2308.00352, 3(4):
+  6, 2023.                                                          Masterman, T., Besen, S., Sawtell, M., and Chao, A. The
+                                                                     landscape of emerging ai agent architectures for reason-
+Hu, Y., Cai, Y., Du, Y., Zhu, X., Liu, X., Yu, Z., Hou,              ing, planning, and tool calling: A survey. arXiv preprint
+ Y., Tang, S., and Chen, S. Self-evolving multi-agent                arXiv:2404.11584, 2024.
+  collaboration networks for software development. arXiv
+  preprint arXiv:2410.16946, 2024.                                  Mohr, F., Wever, M., and Hüllermeier, E. Ml-plan: Auto-
+                                                                     mated machine learning via hierarchical planning. Ma-
+Huang, Q., Vora, J., Liang, P., and Leskovec, J. Mlagent-            chine Learning, 107:1495–1515, 2018.
+  bench: Evaluating language agents on machine learning
+  experimentation. arXiv preprint arXiv:2310.03302, 2023.           Olson, R. S. and Moore, J. H. Tpot: A tree-based pipeline
+                                                                      optimization tool for automating machine learning. In
+Jiang, Z., Schmidt, D., Srikanth, D., Xu, D., Kaplan, I.,
+                                                                      Workshop on automatic machine learning, pp. 66–74.
+   Jacenko, D., and Wu, Y. Aide: Ai-driven exploration in
+                                                                      PMLR, 2016.
+   the space of code, 2025. URL https://arxiv.org/ab
+   s/2502.13138.                                                    OpenAI. Gpt-4o mini: Advancing cost-efficient intelligence.
+Jin, H., Chollet, F., Song, Q., and Hu, X. Autokeras: An              https://openai.com/index/gpt-4o-mini-advanci
+   automl library for deep learning. Journal of machine               ng-cost-efficient-intelligence/, 2024. Accessed:
+   Learning research, 24(6):1–6, 2023.                                2025-01-23.
+
+Kaufmann, T., Weng, P., Bengs, V., and Hüllermeier, E. A            OpenAI. Introducing gpt 5. https://openai.com/index
+  survey of reinforcement learning from human feedback.              /introducing-gpt-5/, 2025. Accessed: 2025-09-25.
+  arXiv preprint arXiv:2312.14925, 10, 2023.
+                                                                    Ouyang, L., Wu, J., Jiang, X., Almeida, D., Wainwright, C.,
+LeDell, E. and Poirier, S. H2o automl: Scalable automatic             Mishkin, P., Zhang, C., Agarwal, S., Slama, K., Ray, A.,
+  machine learning. In Proceedings of the AutoML Work-                et al. Training language models to follow instructions
+  shop at ICML, volume 2020, pp. 24, 2020.                            with human feedback. Advances in neural information
+                                                                      processing systems, 35:27730–27744, 2022.
+Li, Z., Zang, Q., Ma, D., Guo, J., Zheng, T., Liu, M., Niu,
+  X., Wang, Y., Yang, J., Liu, J., et al. Autokaggle: A             Pang, X., Tang, S., Ye, R., Xiong, Y., Zhang, B., Wang, Y.,
+  multi-agent framework for autonomous data science com-              and Chen, S. Self-alignment of large language models
+  petitions. arXiv preprint arXiv:2410.20424, 2024.                   via monopolylogue-based social scene simulation. arXiv
+Liu, S., Ram, P., Vijaykeerthy, D., Bouneffouf, D., Bramble,          preprint arXiv:2402.05699, 2024.
+  G., Samulowitz, H., Wang, D., Conn, A., and Gray, A.
+                                                                    Park, P. S., Schoenegger, P., and Zhu, C. Diminished
+  An admm based framework for automl pipeline configura-
+                                                                      diversity-of-thought in a standard large language model.
+  tion. In Proceedings of the AAAI Conference on Artificial
+                                                                      Behavior Research Methods, 56(6):5754–5770, 2024.
+  Intelligence, volume 34, pp. 4892–4899, 2020.
+
+Liu, Z., Cai, Y., Zhu, X., Zheng, Y., Chen, R., Wen, Y.,            Putta, P., Mills, E., Garg, N., Motwani, S., Finn, C., Garg,
+  Wang, Y., E, W., and Chen, S. Ml-master: Towards ai-                D., and Rafailov, R. Agent q: Advanced reasoning
+  for-ai via integration of exploration and reasoning. arXiv          and learning for autonomous ai agents. arXiv preprint
+  preprint arXiv:2506.16499, 2025a.                                   arXiv:2408.07199, 2024.
+
+Liu, Z., Chen, C., Li, W., Qi, P., Pang, T., Du, C., Lee,           Qian, C., Liu, W., Liu, H., Chen, N., Dang, Y., Li, J., Yang,
+  W. S., and Lin, M. Understanding r1-zero-like training:             C., Chen, W., Su, Y., Cong, X., et al. Chatdev: Commu-
+  A critical perspective. arXiv preprint arXiv:2503.20783,            nicative agents for software development. arXiv preprint
+  2025b.                                                              arXiv:2307.07924, 2023.
+
+Maas, A. L., Daly, R. E., Pham, P. T., Huang, D., Ng, A. Y.,        Rafailov, R., Sharma, A., Mitchell, E., Manning, C. D., Er-
+ and Potts, C. Learning word vectors for sentiment analy-             mon, S., and Finn, C. Direct preference optimization:
+ sis. In Lin, D., Matsumoto, Y., and Mihalcea, R. (eds.),             Your language model is secretly a reward model. Ad-
+ Proceedings of the 49th Annual Meeting of the Associ-                vances in Neural Information Processing Systems, 36:
+ ation for Computational Linguistics: Human Language                  53728–53741, 2023.
+
+                                                               10
+                    ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+Schulman, J., Wolski, F., Dhariwal, P., Radford, A., and            Zhang, G., Geng, H., Yu, X., Yin, Z., Zhang, Z., Tan, Z.,
+  Klimov, O. Proximal policy optimization algorithms.                 Zhou, H., Li, Z., Xue, X., Li, Y., et al. The landscape of
+  arXiv preprint arXiv:1707.06347, 2017.                              agentic reinforcement learning for llms: A survey. arXiv
+                                                                      preprint arXiv:2509.02547, 2025.
+Sheng, G., Zhang, C., Ye, Z., Wu, X., Zhang, W., Zhang,
+  R., Peng, Y., Lin, H., and Wu, C. Hybridflow: A flexi-            Zhang, L., Zhang, Y., Ren, K., Li, D., and Yang, Y. Ml-
+  ble and efficient rlhf framework. arXiv preprint arXiv:             copilot: Unleashing the power of large language mod-
+  2409.19256, 2024.                                                   els in solving machine learning tasks. arXiv preprint
+                                                                      arXiv:2304.14979, 2023a.
+Tang, Z., Fang, H., Zhou, S., Yang, T., Zhong, Z., Hu, T.,
+  Kirchhoff, K., and Karypis, G. Autogluon-multimodal               Zhang, S., Gong, C., Wu, L., Liu, X., and Zhou, M. Automl-
+  (automm): Supercharging multimodal automl with foun-                gpt: Automatic machine learning with gpt. arXiv preprint
+  dation models. arXiv preprint arXiv:2404.16233, 2024.               arXiv:2305.02499, 2023b.
+Trirat, P., Jeong, W., and Hwang, S. J. Automl-agent: A             Zheng, R., Dou, S., Gao, S., Hua, Y., Shen, W., Wang, B.,
+  multi-agent llm framework for full-pipeline automl. arXiv           Liu, Y., Jin, S., Liu, Q., Zhou, Y., et al. Secrets of rlhf
+  preprint arXiv:2410.02958, 2024.                                    in large language models part i: Ppo. arXiv preprint
+Wang, S., Zhang, S., Zhang, J., Hu, R., Li, X., Zhang,                arXiv:2307.04964, 2023.
+ T., Li, J., Wu, F., Wang, G., and Hovy, E. Reinforce-              Zheng, Y., Zhang, R., Zhang, J., Ye, Y., Luo, Z., Feng, Z.,
+ ment learning enhanced llms: A survey. arXiv preprint                and Ma, Y. Llamafactory: Unified efficient fine-tuning
+ arXiv:2412.10400, 2024.                                              of 100+ language models. In Proceedings of the 62nd
+Wang, Z., Wang, K., Wang, Q., Zhang, P., Li, L., Yang, Z.,            Annual Meeting of the Association for Computational Lin-
+ Yu, K., Nguyen, M. N., Liu, L., Gottlieb, E., et al. Ragen:          guistics (Volume 3: System Demonstrations), Bangkok,
+ Understanding self-evolution in llm agents via multi-turn            Thailand, 2024. Association for Computational Linguis-
+ reinforcement learning. arXiv preprint arXiv:2504.20073,             tics. URL http://arxiv.org/abs/2403.13372.
+ 2025.
+Xiong, W., Song, Y., Zhao, X., Wu, W., Wang, X., Wang, K.,
+  Li, C., Peng, W., and Li, S. Watch every step! llm agent
+  learning via iterative step-level process refinement. In
+  Proceedings of the 2024 Conference on Empirical Meth-
+  ods in Natural Language Processing, pp. 1556–1572,
+  2024.
+Xu, F., Hao, Q., Zong, Z., Wang, J., Zhang, Y., Wang,
+ J., Lan, X., Gong, J., Ouyang, T., Meng, F., et al. To-
+ wards large reasoning models: A survey of reinforced
+  reasoning with large language models. arXiv preprint
+  arXiv:2501.09686, 2025.
+Yang, A., Yang, B., Zhang, B., Hui, B., Zheng, B., Yu,
+  B., Li, C., Liu, D., Huang, F., Wei, H., et al. Qwen2. 5
+  technical report. arXiv preprint arXiv:2412.15115, 2024.
+Yang, A., Li, A., Yang, B., Zhang, B., Hui, B., Zheng,
+  B., Yu, B., Gao, C., Huang, C., Lv, C., Zheng, C., Liu,
+  D., Zhou, F., Huang, F., Hu, F., Ge, H., Wei, H., Lin,
+  H., Tang, J., Yang, J., Tu, J., Zhang, J., Yang, J., Yang,
+  J., Zhou, J., Zhou, J., Lin, J., Dang, K., Bao, K., Yang,
+  K., Yu, L., Deng, L., Li, M., Xue, M., Li, M., Zhang,
+  P., Wang, P., Zhu, Q., Men, R., Gao, R., Liu, S., Luo,
+  S., Li, T., Tang, T., Yin, W., Ren, X., Wang, X., Zhang,
+  X., Ren, X., Fan, Y., Su, Y., Zhang, Y., Zhang, Y., Wan,
+  Y., Liu, Y., Wang, Z., Cui, Z., Zhang, Z., Zhou, Z., and
+  Qiu, Z. Qwen3 technical report, 2025. URL https:
+  //arxiv.org/abs/2505.09388.
+
+                                                               11
+                     ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+A. Problem formulation
+Reformulation from equation 1 to equation 3. Starting from equation 1, suppose the initial state distribution is dπθ (s0 ),
+the state transition probability is pπ (st+1 |st , at ), then we have
+                                                                            n−1
+                                                                            Y
+                                               Pπθ (τ ) = dπθ (s0 )               p(st+1 |st , at )πθ (at |st ).                              (7)
+                                                                            t=0
+
+Hence the reformulation is:
+              J (θ) = Eπθ [R(τ )]
+                      X
+                    =     Pπθ (τ )R(τ )
+                          τ
+                                                       n−1
+                                                                                                !    n
+                                                                                                                      !
+                              X                        Y                                             X
+                                             πθ
+                     =                     d (s0 )            p(st+1 |st , at )πθ (at |st )                 R(st , at )
+                         s0 ,a0 ,...,sn                t=0                                            t=0
+                                                                                                       !                                      (8)
+                         n−1
+                         X         X                          n−1
+                                                              Y
+                     =                            dπθ (s0 )         p(sk+1 |sk , ak )πθ (ak |sk ) R(st , at )
+                         t=0 s0 ,a0 ,...,sn                   k=0
+                                                                                                                    
+                         n−1
+                         XX                        X                          t−1
+                                                                              Y
+                     =                                           dπθ (s0 )         p(sk+1 |sk , ak )πθ (ak |sk ) πθ (at |st )R(st , at )
+                         t=0 st ,at       s0 ,a0 ,...st−1 ,at−1               k=0
+
+However, we can define the state distribution dπθ (st ) as the probability agent visits state st at time t. Then according to this
+definition, this probability can be written as:
+                                                           X                           t−1
+                                                                                       Y
+                                 dπθ (st ) =                               dπθ (s0 )         p(sk+1 |sk , ak )πθ (ak |sk ).                   (9)
+                                                   s0 ,a0 ,...st−1 ,at−1               k=0
+
+
+Then we have
+                                                              n−1
+                                                              XX
+                                                  J (θ) =                  dπθ (st )πθ (at |st )R(at , st )
+                                                              t=0 st ,at
+                                                              X                   X                                                          (10)
+                                                         =            dπθ (st )           πθ (at |st )R(at , st )
+                                                              st ∈S               at ∈A
+
+                                                         = Jstep (θ)
+
+B. Machine Learning Tasks and Data Collection Process
+B.1. Data Collecting Pipeline for Exploration-Enriched Fine-tuning
+We construct diverse action pools along three semantic axes—Data, Model, and Learning—to support structured exploration.
+For each axis, we prompt a frozen LLM (GPT-4o-mini) to generate a large set of candidate actions (e.g., “Add MixUp
+augmentation”, “Switch to AdamW optimizer”). To promote diversity, we embed all candidates using a sentence transformer
+and apply farthest-point sampling (FPS) to select a compact, representative subset. The resulting pools PData , PModel , and
+PLearning are fixed during training.
+During data collection, we form exploration-enriched prompts by randomly selecting 1–3 axes, shuffling their order, and
+drawing one action from each corresponding pool. These actions are concatenated into an initial instruction for the expert
+agent, which then interacts with a fast-executable ML environment (e.g., small-scale tabular or vision tasks) to produce a
+full trajectory. The complete pipeline is summarized in Algorithm 1.
+
+B.2. Details of Machine Learning Tasks
+The machine learning tasks utilized in our paper are all from MLAgentBench or MLE-bench. Table 4 shows all 9 training
+tasks and 10 testing tasks. The 9 training tasks contain 4 tasks from MLAgentBench and 5 from MLE-bench (Chan et al.,
+2024); while the 10 testing tasks are all from MLE-bench.
+
+                                                                                  12
+                        ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+    Algorithm 1: Exploration-Enriched Trajectory Generation
+  Input: Semantic axes X = {Data, Model, Learning}, Set of fast-executable tasks N , each with base description ptask
+                                                                                                                 n
+  Output: Dataset of expert trajectories D
+1 #Phase 1: Build diverse action pools via FPS
+2 for each axis X ∈ X do
+3     Generate M candidate actions CX using LLM prompting
+4     PX ← FARTHEST P OINT S AMPLING(CX , K)
+5  #Phase 2: Generate trajectories
+6  D ← ∅;
+ 7 for each task n ∈ N do
+ 8     Sample k ∼ Uniform{1, 2, 3};
+ 9     Sample k distinct axes {X1 , . . . , Xk } ⊂ X ;
+10     Sample ai ∼ Uniform(PXi ) for i = 1, . . . , k;
+11     Form prompt: pn ← ptask
+                             n .format(a1 , . . . , ak );
+12     Run πe on task n with prompt pn and obtain trajectory τ (i)
+13     D ← D ∪ {τ (i) };
+
+
+    Table 4. All training and testing tasks used in our experiments. MLA and MLE stand for MLAgentBench (Huang et al., 2023) and
+    MLE-bench (Chan et al., 2024) respectively.
+
+                Task Name                                          Data Type      Task Type          Metric Source
+                                                  Training
+                cifar-10                                               Image     Classification Acc. (%) ↑     MLA
+                aerial-cactus-identification                           Image     Classification     AUC ↑      MLE
+                dogs-vs-cats-redux-kernels-edition                     Image     Classification   Logloss ↓    MLE
+                plant-pathology-2020-fgvc7                             Image     Classification     AUC ↑      MLE
+                home-data-for-ml-course                                Tabular    Regression        MAE ↓      MLA
+                spaceship-titanic                                      Tabular    Regression     Acc. (%) ↑    MLA
+                nomad2018-predict-transparent-conductors               Tabular    Regression     RMSLE ↓       MLE
+                feedback-prize-english-language-learning                Text     Classification MCRMSE ↓       MLA
+                ogbn-arxiv (Maas et al., 2011)                         Graph     Classification Acc. (%) ↑     MLA
+                                                   Testing
+                denoising-dirty-documents                              Image      Generation        RMSE↓      MLE
+                leaf-classification                                    Image     Classification    Logloss ↓   MLE
+                statoil-iceberg-classifier-challenge                   Image     Classification    Logloss ↓   MLE
+                whale-categorization-playground                        Image     Classification   MAP@5 ↑      MLE
+                learning-agency-lab-automated-essay-scoring-2           Text      Regression        QWK ↑      MLE
+                detecting-insults-in-social-commentary                  Text     Classification   Acc. (%) ↑   MLE
+                spooky-author-identification                            Text     Classification    Logloss ↓   MLE
+                jigsaw-toxic-comment-classification-challenge           Text     Classification      AUC ↑     MLE
+                us-patent-phrase-to-phrase-matching                    Tabular    Regression          PCC ↑    MLE
+                tabular-playground-series-dec-2021                     Tabular    Regression      Acc. (%) ↑   MLE
+
+
+
+    The selection strategy of training tasks aims to enhance data collection efficiency. Specifically, we select relatively simpler
+    machine learning tasks (e.g. tasks labeled with low complexity in MLE-bench) for training. These training tasks typically
+    involve smaller datasets, which enable faster iterations. For testing, we select relatively more complex tasks to evaluate the
+    generalization capability. In addition, the training tasks and test tasks span three machine learning data types (image, text
+    and tabular) and two general task categories (regression and classification).
+    Specifically, Each task consists of the following components: (1) training, validation, and test data; (2) an initial bug-free
+
+                                                                  13
+                       ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+Table 5. Actions in MLAgentBench (Huang et al., 2023), where each action has a name, input and output. Most of the actions are primitive
+actions that include file system operations and python script execution. The last two are compound actions that is composed of multiple
+primitive actions and LM calls.
+
+   Action Name                     Input                                                     Observation
+   List Files                      directory (e.g. .)                                        list of files in the directory
+   Copy File                       Source (e.g.        train.py), destination (e.g.          A success or error message
+                                   train_copy.py)
+   Inspect Script Lines            file name, start line number, end line number             the file content between start and end
+                                                                                             line numbers
+   Execute Script                  file name (e.g. train.py)                                 Any output from the execution
+   Final Answer                    None                                                      None
+   Understand File                 file name, a query (e.g. the model architecture)          retrieved content from the file rele-
+                                                                                             vant to the query
+   Edit Script                     file name, edit instruction (e.g. change epoch to         The diff of the edited file based on
+                                   20), save file name                                       the instruction
+
+
+
+
+                Figure 6. Task file structure and prompt about the machine learning problem of cifar-10 task, for instance.
+
+
+script, "train.py", generated by GPT-4o-mini; (3) an evaluation script, "eval.py", which is used to calculate the test score
+from the submitted results; (4) a problem description file, "research_problem.txt"; and (5) a "prepare.py" script to
+download the data if necessary. An example file structure and related problem descriptions are shown in Figure 6. To ensure
+clarity regarding the task details and training objectives, we have refined some initial prompts from MLAgentBench by
+incorporating specific targets, such as "try your best to increase the test accuracy to 99.99%" (see in the right box in Figure 6).
+The format for the initial prompt, including the tool and format prompts, follows actions defined by MLAgentBench (see
+Table 6).
+                              Table 6. Initial prompt template for agents on autonomous machine learning.
+
+  Initial prompt template for agents on autonomous machine learning.
+
+  You are a helpful research assistant. You have access to the following tools:
+  {tools_prompt}
+  Research Problem: {research_problem}
+  Always respond in this format exactly:
+  {format_prompt}
+  Observation:
+  ”’
+  the result of the action
+  ”’
+
+
+                                           Tools prompt ({tools_prompt}) in initial prompt.
+   You are a helpful research assistant . You have access to the following tools :
+   - List Files :
+           Use this to navigate the file system .
+
+
+                                                                    14
+                 ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+        Usage :
+        ’’’
+        Action : List Files
+        Action Input : {
+            " dir_path ": [ a valid relative path to a directory , such as "." or " folder1 / folder2 "]
+        }
+        Observation : [ The observation will be a list of files and folders in dir_path or current directory is
+             dir_path is empty , or an error message if dir_path is invalid .]
+        ’’’
+
+- Copy File :
+        Use this to copy a file to a new location with a new name .
+        Usage :
+        ’’’
+        Action : Copy File
+        Action Input : {
+              " source ": [ a valid file name with relative path to current directory if needed ] ,
+              " destination ": [ a valid file name with relative path to current directory if needed ]
+        }
+        Observation : [ A success message if the file is copied successfully , or an error message if the file
+               cannot be copied .]
+        ’’’
+
+- Execute Script :
+        Use this to execute the python script . The script must already exist .
+        Usage :
+        ’’’
+        Action : Execute Script
+        Action Input : {
+            " script_name ": [ a valid python script name with relative path to current directory if needed ]
+        }
+        Observation : [ The observation will be output of the script or errors .]
+        ’’’
+
+- Final Answer :
+        Use this to provide the final answer to the current task .
+        Usage :
+        ’’’
+        Action : Final Answer
+        Action Input : {
+            " final_answer ": [ a detailed description on the final answer ]
+        }
+        Observation : [ The observation will be empty .]
+        ’’’
+
+- Understand File :
+        Use this to read the whole file and understand certain aspects . You should provide detailed description
+             on what to look for and what should be returned . To get a better understanding of the file , you can
+             use Inspect Script Lines action to inspect specific part of the file .
+        Usage :
+        ’’’
+        Action : Understand File
+        Action Input : {
+            " file_name ": [ a valid file name with relative path to current directory if needed ] ,
+            " things_to_look_for ": [ a detailed description on what to look for and what should returned ]
+        }
+        Observation : [ The observation will be a description of relevant content and lines in the file . If the
+             file does not exist , the observation will be an error message .]
+        ’’’
+
+- Inspect Script Lines :
+        Use this to inspect specific part of a python script precisely , or the full content of a short script .
+             The number of lines to display is limited to 100 lines . This is especially helpful when debugging .
+        Usage :
+        ’’’
+        Action : Inspect Script Lines
+        Action Input : {
+            " script_name ": [ a valid python script name with relative path to current directory if needed ] ,
+            " start_line_number ": [ a valid line number ] ,
+            " end_line_number ": [ a valid line number ]
+        }
+        Observation : [ The observation will be the content of the script between start_line_number and
+             end_line_number . If the script does not exist , the observation will be an error message .]
+        ’’’
+
+- Edit Script ( AI ) :
+        Use this to do a relatively large but cohesive edit over a python script . Instead of editing the script
+             directly , you should describe the edit instruction so that another AI can help you do this .
+        Usage :
+        ’’’
+        Action : Edit Script ( AI )
+
+
+                                                         15
+                    ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+           Action Input : {
+               " script_name ": [ a valid python script name with relative path to current directory if needed . An
+                     empty sctipt will be created if it does not exist .] ,
+               " edit_instruction ": [ a detailed step by step description on how to edit it .] ,
+               " save_name ": [ a valid file name with relative path to current directory if needed ]
+           }
+           Observation : [ The observation will be the edited content of the script . If the script does not exist , the
+                  observation will be an error message . You should always double check whether the edit is correct .]
+           ’’’
+
+
+                         Table 7. Response format requirement ({format_prompt}) in the initial prompt.
+
+
+  Response format requirement ({format_prompt}) in the initial prompt.
+
+  Reflection: What does the observation mean? If there is an error, what caused the error and how to debug?
+  Research Plan and Status: The full high-level research plan, with current status and confirmed results
+  of each step briefly annotated. It must only include progress that has been made by previous steps. If
+  there is any update, enclose the new update text in double asterisks **like this**. If there is no update,
+  just copy the previous step Research Plan and Status. The high-level plan from the previous step should
+  be fully retained, unless it is intentionally revised.
+  Fact Check: List all objective statements in the updates to Research Plan and Status one by one and point
+  out whether it is guessed versus directly confirmed by the previous observation directly above. Performance
+  numbers can only be confirmed by running the code and observing the output.
+  Thought: What you are currently doing, what actions to perform and why
+  Action: The action to take, should be one of the names of the tools
+  Action Input: The input to the action as a valid JSON string
+
+
+B.3. Details of Data Collection
+In this paper, we use the MLAgentBench (Huang et al., 2023) environment to collect training trajectories across 9 machine
+learning tasks. The environment needs an LLM-based agent to take actions and send feedback to the agent. This will
+iterate for certain steps. We employ GPT-4o-mini (OpenAI, 2024) as the LLM-based agent to generate thinking and action
+following Table B.2. This agent interacts with the environment, while Qwen2.5-Coder-32B-Instruct (Yang et al., 2024)
+powers the coder agent, which is responsible for writing code and understanding files within the environment.
+Each trajectory comprises a multi-turn conversation between the agent and the environment. For each trajectory, we set the
+maximum number of steps as 15 and the time limit as 30 minutes to control the length and duration of interactions. Finally,
+we generated 10k trajectories on 9 tasks. These trajectories are utilized both in SFT training and PPO training.
+Since each task in the MLAgentBench environment requires an initial script, tasks sourced from MLE-bench do not have a
+natural initial script. To address this, we generate simple, bug-free initial scripts for those tasks using GPT-4o-mini to meet
+the environment’s requirements.
+To diversify the trajectories we collect for SFT training, we curate an initial idea pool of at least 100 diverse ideas which
+may potentially improve the performance of our initial script. We calculate the embedding distance of each idea in initial
+idea pool and filter out the top 10 initial ideas whose average embedding distance is farthest to others. These ideas form a
+defined idea pool, which guides the first step of each trajectory. For the generation of each trajectory, we randomly select 1
+to 3 idea combinations from this idea pool and prioritize their implementation in the initial step by including the relevant
+instructions in the file research_problem.txt (see Figure 6). Table 8 shows the prompt we use and Table 9 shows an
+example of defined idea pool for the first step.
+                             Table 8. The prompt we use to generate the data-preprocessing idea pool.
+
+
+  The prompt we use to generate the data-preprocessing idea pool.
+  You are given a machine learning task and an initial script on the task.
+
+ The machine learning task description is:
+ {task_description}
+
+  The initial script is:
+
+
+                                                               16
+                    ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+
+ {initial_script}
+ You should give {number_to_generate} advice that may potentially improve the metric performance(e.g.
+ accuracy) of the script on this machine learning task. Your advice can only be related to data
+ preprocessing.
+ The advice in your answer should strictly follow the following format(one advice should be in a line),
+ note that [advice] flag should be mentioned only once in your answer:
+ [advice]
+ YOUR ADVICE HERE
+ ...
+
+               Table 9. An example of the first step action space(after filtering) when collecting training trajectories.
+
+
+  An example of the first step action space(after filtering) when collecting training trajectories.
+
+  Tune the momentum parameter in the optimizer for better convergence.
+  Use early stopping to terminate training when the test accuracy starts decreasing.
+  Experiment with focal loss to deal with imbalanced data if classes are not evenly distributed.
+  Regularize model weights with L1 or L2 regularization.
+  Implement feature visualization to understand what features are being learned.
+  Use a higher resolution for input images, if feasible, to capture more details.
+  Increase the complexity of the neural network by adding more convolutional layers.
+  Explore semi-supervised learning methods to leverage unlabeled data for training improvements.
+  Normalize the data further by scaling the input images to a range of [0, 1].
+  Experiment with different batch sizes to see if a smaller or larger batch size affects performance.
+
+
+
+C. Experimental Details
+C.1. Details of Experimental Set-up
+Training details. We implement our supervised fine-tuning (SFT) and proximal policy optimization (PPO) training using 8
+A100s. For the SFT, the code base is LLama-Factory (Zheng et al., 2024), where we fully fine-tune the qwen2.5-7b model
+for 2 epochs with batch size 64 and learning rate 2e − 5. For the PPO, the code base is VeRL (Sheng et al., 2024). The
+PPO training setup involves the following hyperparameters and configurations: the training batch size is set to 256, and the
+number of epochs is 1. Additionally, the learning rate of actor and critic is set as 1e − 6 and 1e − 5, respectively, and the
+coefficient of KL is 0.001.
+Baseline details. We show the specific versions of baselines in Table 10.
+
+                                          Table 10. Model Version and Identifier Mapping
+
+                                       Model Name                Version
+                                       GPT-4o-mini               GPT-4o-mini-2024-07-18
+                                       GPT-4o                    GPT-4o-2024-08-06
+                                       Qwen-7B-Base              Qwen2.5-7B
+                                       Qwen-7B-Instruct          Qwen2.5-7B-Instruct
+                                       Qwen-32B-Instruct         Qwen2.5-32B-Instruct
+                                       GPT-5                     GPT-5-2025-08-07
+
+
+
+C.2. Additional Ablation Study and Analysis
+Diversity. Figure 7 compares the number of unique nouns associated with each editing verb in two models: Qwen2.5-7B-
+Instruct and ours-sft (ML-Agent-SFT). To generate these counts, we randomly sampled 100 edit_instruction sentences
+from the recorded expert trajectories. Then, we utilize an open-source NLP toolkit SpaCy to obtain the verb and noun for
+each edit_instruction sentence. Results show that after supervised fine-tuning with expert’s trajectories, the model can
+output a broader variety of actions, evidenced by the higher counts of unique nouns per verb.
+
+                                                                  17
+                                            ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+                                                                 Number of Unique Nouns per Verb for Each Model
+
+
+
+
+Number of Unique Nouns
+                         20                                                                                                                                          qwen-7b-instruct
+                                                                                                                                                                     ours-sft
+                         15
+
+                         10
+
+                         5
+
+                         0       increaseadd
+                                   replace
+                                   change
+                                    modify
+                                      adjust
+                                    reduce
+                                     create
+                                        tune
+                                   remove set
+                                           try
+                                decrease
+                                       apply
+                                    ensure
+                                   convert
+                                      revert
+                              implement
+                                    updaterun
+                                    specify
+                                  perform
+                                 combine
+                                      define
+                                    handle
+                                    correct
+                                         use
+                                     match
+                                     import
+                                calculate
+                                 enhance pad
+                                      check
+                                       have
+                                       move fill
+                               normalize
+                                   include
+                                   identify
+                                 initialize
+                                        keep
+                                        print
+                                  monitor
+                                                                                                  Verb
+                               represent
+                                  reshape
+                                      select
+                                    restore
+                               transformtrain
+
+   Figure 7. Unique noun counts per verb across 100 randomly sampled edit instructions, comparing the Qwen2.5-7B-Instruct model (blue)
+   with the ML-Agent-SFT model (red).
+
+
+                                      cifar10                           house-price                                 denoising-dirty-documents           us-patent-phrase-to-phrase-matching
+                                                                                                                                                      0.60
+                 0.85                                                                                    0.09
+                                                                                0k         10k                                    0k         10k
+                                                         20500                  3k         30k                                    3k         30k
+                 0.80                                                                                    0.08                                         0.58
+                                                         20000
+                 0.75                                                                                                                                 0.56
+                                                         19500                                           0.07
+                                                                                                                                                      0.54
+  Score                                                                                          Score
+                 0.70                                    19000                                           0.06
+                                                                                                                                                      0.52
+                 0.65                                    18500                                           0.05
+                                                                                                                                                      0.50
+                 0.60                                   18000                                            0.04
+                                            0k      10k                                                                                               0.48                   0k      10k
+                 0.55                       3k      30k 17500                                            0.03                                                                3k      30k
+                              4   8   16   32    64 128       4     8    16    32     64    128                 4      8    16    32    64      128          4   8     16   32    64 128
+                                      Best@K                             Best@K                                             Best@K                                      Best@K
+
+                                                 Figure 8. Different number of training samples in RL, starting from our sft model.
+
+
+
+    Effects of training data size in RL.
+   Here, we investigate how varying the number of training data samples (0k, 3k, 10k, 30k) affects the performance in RL.
+   The 0k scenario represents ML-Agent-SFT model. For every model, we run 128 trajectories for each task and evaluate
+   the best@K, where K ranges over [4, 8, 16, 32, 64, 128], as shown in Figure 8. In particular, for the two held-out tasks
+   (second row), training with ppo (3k, 6k, and 9k) improves performance faster than 0k as the number of sampled trajectories
+   increases.
+   Is thought helpful? In Table 11, we compare the performance of models with and without the requirement of thought
+   before taking action across 13 tasks. The thought process includes several key components such as "Reflection," "Research
+   Plan and Status," "Fact Check," "Thought," "Action," and "Action Input,". In contrast, the model without thought only
+   requires "Action" and "Action Input." Note that the supervised fine-tuning data is also consistent with the key requirement.
+   The models with thought generally exhibit higher improved performance on both held-in and held-out tasks. For instance,
+   on the held-in cifar-10, the model with thought reaches 33.80% performance gain compared to 13.03% when thought is not
+   required. This trend continues across the held-out tasks, where the model with thought shows higher accuracy and lower
+   loss, demonstrating the importance of incorporating a thoughtful reflection and planning phase for Autonomous machine
+   learning via RL.
+
+    C.3. Additional ML tasks results
+   To further demonstrate the generalization of our ML-Agent, we expand our evaluation with additional held-out tasks from
+   MLE-Bench and the Kaggle platform, covering medical image, audio, time series, and multi-modal settings. The results
+   in Table 12 show that ML-Agent maintains strong cross-task generalization compared with both same-scale open-source
+   baselines (e.g., Qwen2.5-7B-Instruct) and much larger proprietary models.
+
+                                                                                                 18
+                       ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+Table 11. Performance comparison of reinforcement learning models with and without the requirement of thought prior to action. Average
+performance gains (%) are shown for both held-in and held-out tasks, highlighting improvements in various tasks when thought is
+incorporated.
+
+                     Held-in tasks                                     Held-out tasks
+Thought?
+              cifar-10 house. feedback denoising. leaf. statoil. learning. detecting. spooky. jigsaw.                 us.      tabular.
+     %         13.03     5.68       9.88      28.66      2.50 -0.03         1.27        0.64       -3.40     0.00    7.15       -0.02
+     !         33.80     6.77      13.47      52.38      13.87 1.41         1.91        1.74       1.76      0.01    12.96       0.20
+
+          Table 12. Cross-task generalization of ML-Agent vs. baselines on additional held-out ML tasks over 8 trajectories.
+                 Task Name                           Task Type            Metric Qwen2.5-7B DeepSeek-R1 Gemini-2.5-Pro GPT-5 ML-Agent
+      APTOS 2019 Blindness Detection         medical image classification QWK     -1.1040     -0.6148      -1.5141     -3.3470 -0.0455
+  H&M Personalized Fashion Recommendations     multi-modal regression MAP@12 -4.2553          -1.0638       2.1277    20.2128 8.5106
+        Optiver – Trading at the Close         time series regression     MAE      0.0229      0.0382       0.0573      0.1412 0.1145
+ICML 2013 Whale Challenge: Right Whale Redux     audio classification     AUC      0.1052      0.1804       5.8770      0.5712 0.7215
+    Text Normalization Challenge: English        text normalization        Acc.   -2.4940      0.0839       0.1345      0.1243 0.0839
+
+
+
+C.4. Cost analysis with amortization
+Here we provide the pre-inference computation cost incurred by (i) expert trajectory collection with GPT-4o-mini, (ii)
+supervised fine-tuning (SFT), and (iii) step-wise RL training. Table 13 summarizes the total pre-inference cost. Specifically,
+for GPT-4o-mini, we utilize offical api price to calculate the total api cost during expert trajectories collection; for supervised
+fine-tuning, we estimate the computational cost for training a 7B parameters model with 10k training samples; For RL
+training, we estimate step-wise rollout costs.
+Given this one-time cost, we estimate the number of trajectories required to amortize it when compared against strong
+                                                                                                          Cpre
+prompt-based baselines. Specifically, we compute the break-even number of trajectories as Namort = ∆c          , where Cpre is
+the total pre-inference cost and ∆c is the per-trajectory inference cost gap between a baseline and ML-Agent. Table 14
+reports the resulting Namort across baselines and foundation models. Overall, owing to its low per-trajectory inference cost,
+ML-Agent typically needs only a few thousand trajectories to amortize the pre-inference computation cost.
+
+Table 13. Computation costs ($) incurred before inference, including expert trajectory collection (GPT-4o-mini), SFT, and RL training.
+
+                                           Expert trajectory collection      SFT       RL       Total
+                                Cost ($)              214.47                79.20     29.14    322.81
+
+
+C.5. Case study
+In this section, we will present more detailed case study on trajectories generated by ML-Agent on some test tasks such
+as denoising-dirty-documents. In Appendix C.5.1, we show the task description for denoising-dirty-documents.
+In Appendix C.5.2, we show the initial script for denoising-dirty-documents. In Appendix C.5.3, we show partial
+trajectory generated by ML-Agent. We give an analysis in Appendix C.5.4.
+
+C.5.1. TASK D ESCRIPTION FOR denoising-dirty-documents
+
+
+
+
+                                                                 19
+                          ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+Table 14. Number of trajectories required to amortize the pre-inference cost (Table 13) compared to strong prompt-based methods under
+different foundation models.
+
+                                       Method              Model                    #Trajectories to amortize cost
+                                       MLAB                Deepseek-R1                              4262
+                                       MLAB                Gemini-2.5-Pro                           1518
+                                       MLAB                GPT-5                                    1633
+                                       AIDE                Deepseek-R1                              3488
+                                       AIDE                Gemini-2.5-Pro                           2106
+                                       AIDE                GPT-5                                    1901
+                                       ML-Master           Deepseek-R1                              3284
+                                       ML-Master           GPT-5                                    3945
+
+
+                                                  Task description for denoising-dirty-documents
+You are given a machine learning task on "denoising-dirty-documents" dataset. The dataset descriptions are given below:
+
+# Description
+
+[Optical Character Recognition](http://en.wikipedia.org/wiki/Optical_character_recognition) (OCR) is the process of getting type or handwritten documents into a
+       digitized format. If you’ve read a classic novel on a digital reading device or had your doctor pull up old healthcare records via the hospital computer
+       system, you’ve probably benefited from OCR.
+
+OCR makes previously static content editable, searchable, and much easier to share. But, a lot of documents eager for digitization are being held back. Coffee
+       stains, faded sun spots, dog-eared pages, and lot of wrinkles are keeping some printed documents offline and in the past.
+
+This competition challenges you to give these documents a machine learning makeover. Given a dataset of images of scanned text that has seen better days, you’re
+       challenged to remove the noise. Improving the ease of document enhancement will help us get that rare mathematics book on our e-reader before the next
+       beach vacation.
+
+We’ve kicked off the fun with a few [handy scripts to get you started on the dataset](https://www.kaggle.com/c/denoising-dirty-documents/scripts).
+
+# Evaluation
+
+Submissions are evaluated on the [root mean squared error](https://www.kaggle.com/wiki/RootMeanSquaredError) between the cleaned pixel intensities and the actual
+       grayscale pixel intensities.
+
+# Submission File
+
+Form the submission file by melting each images into a set of pixels, assigning each pixel an id of image_row_col (e.g. 1_2_1 is image 1, row 2, column 1).
+       Intensity values range from 0 (black) to 1 (white). The file should contain a header and have the following format:
+
+‘‘‘
+id,value1_1_1,1
+1_2_1,1
+1_3_1,1
+etc.
+‘‘‘
+
+## Dataset Description
+
+You are provided two sets of images, train and test. These images contain various styles of text, to which synthetic noise has been added to simulate real-world,
+       messy artifacts. The training set includes the test without the noise (train_cleaned). You must create an algorithm to clean the images in the test set.
+
+
+
+C.5.2. I NITIAL S CRIPT FOR denoising-dirty-documents
+                                                       Initial script for denoising-dirty-documents
+import os
+import numpy as np
+import pandas as pd
+from PIL import Image
+import glob
+from sklearn.model_selection import train_test_split
+import torch
+from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+import math
+
+# Set device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Define dataset
+class DenoisingDataset(Dataset):
+    def __init__(self, noisy_images, clean_images=None, transform=None):
+
+
+
+                                                                               20
+                          ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+       self.noisy_images = noisy_images
+       self.clean_images = clean_images
+       self.transform = transform
+
+   def __len__(self):
+       return len(self.noisy_images)
+
+   def __getitem__(self, idx):
+       noisy_image = Image.open(self.noisy_images[idx]).convert("L")
+       if self.transform:
+           noisy_image = self.transform(noisy_image)
+       if self.clean_images is not None:
+           clean_image = Image.open(self.clean_images[idx]).convert("L")
+           if self.transform:
+               clean_image = self.transform(clean_image)
+           return noisy_image, clean_image
+       else:
+           return noisy_image
+
+
+# Custom collate function to pad images to the same size
+def collate_fn(batch):
+    if len(batch[0]) == 2:
+        imgs, targets = zip(*batch)
+    else:
+        imgs = batch
+        targets = None
+
+   # Compute necessary heights and widths after padding to next multiple of 8
+   heights = []
+   widths = []
+   for img in imgs:
+       c, h, w = img.shape
+       new_h = ((h - 1) // 8 + 1) * 8
+       new_w = ((w - 1) // 8 + 1) * 8
+       heights.append(new_h)
+       widths.append(new_w)
+
+   max_h = max(heights)
+   max_w = max(widths)
+
+   padded_imgs = []
+   if targets is not None:
+       padded_targets = []
+
+   for i, img in enumerate(imgs):
+       c, h, w = img.shape
+       pad_h = max_h - h
+       pad_w = max_w - w
+       padding = (0, pad_w, 0, pad_h) # left, right, top, bottom
+       padded_img = F.pad(img, padding)
+       padded_imgs.append(padded_img)
+       if targets is not None:
+           target = targets[i]
+           padded_target = F.pad(target, padding)
+           padded_targets.append(padded_target)
+
+   imgs_tensor = torch.stack(padded_imgs, dim=0)
+   if targets is not None:
+       targets_tensor = torch.stack(padded_targets, dim=0)
+       return imgs_tensor, targets_tensor
+   else:
+       return imgs_tensor
+
+
+# Load image paths
+noisy_images = sorted(glob.glob("./train/*.png"))
+clean_images = sorted(glob.glob("./train_cleaned/*.png"))
+
+# Split into train and validation sets
+train_noisy, val_noisy, train_clean, val_clean = train_test_split(
+    noisy_images, clean_images, test_size=0.2, random_state=42
+)
+
+# Define transforms
+transform = transforms.Compose(
+    [
+       transforms.ToTensor(),
+    ]
+)
+
+# Create datasets and dataloaders
+train_dataset = DenoisingDataset(train_noisy, train_clean, transform)
+val_dataset = DenoisingDataset(val_noisy, val_clean, transform)
+
+train_loader = DataLoader(
+    train_dataset, batch_size=4, shuffle=True, collate_fn=collate_fn
+)
+val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, collate_fn=collate_fn)
+
+
+# Define the model (modified U-Net with cropping)
+
+
+
+                                                                                21
+                           ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+class UNet(nn.Module):
+    def __init__(self):
+        super(UNet, self).__init__()
+        # Encoder
+        self.enc1 = nn.Sequential(
+            nn.Conv2d(1, 64, 3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, 3, padding=1),
+            nn.ReLU(),
+        )
+        self.pool1 = nn.MaxPool2d(2, 2)
+
+       self.enc2 = nn.Sequential(
+           nn.Conv2d(64, 128, 3, padding=1),
+           nn.ReLU(),
+           nn.Conv2d(128, 128, 3, padding=1),
+           nn.ReLU(),
+       )
+       self.pool2 = nn.MaxPool2d(2, 2)
+
+       self.enc3 = nn.Sequential(
+           nn.Conv2d(128, 256, 3, padding=1),
+           nn.ReLU(),
+           nn.Conv2d(256, 256, 3, padding=1),
+           nn.ReLU(),
+       )
+       self.pool3 = nn.MaxPool2d(2, 2)
+
+       # Bottleneck
+       self.bottleneck = nn.Sequential(
+           nn.Conv2d(256, 512, 3, padding=1),
+           nn.ReLU(),
+           nn.Conv2d(512, 512, 3, padding=1),
+           nn.ReLU(),
+       )
+
+       # Decoder
+       self.up3 = nn.ConvTranspose2d(512, 256, 2, stride=2)
+       self.dec3 = nn.Sequential(
+           nn.Conv2d(512, 256, 3, padding=1),
+           nn.ReLU(),
+           nn.Conv2d(256, 256, 3, padding=1),
+           nn.ReLU(),
+       )
+
+       self.up2 = nn.ConvTranspose2d(256, 128, 2, stride=2)
+       self.dec2 = nn.Sequential(
+           nn.Conv2d(256, 128, 3, padding=1),
+           nn.ReLU(),
+           nn.Conv2d(128, 128, 3, padding=1),
+           nn.ReLU(),
+       )
+
+       self.up1 = nn.ConvTranspose2d(128, 64, 2, stride=2)
+       self.dec1 = nn.Sequential(
+           nn.Conv2d(128, 64, 3, padding=1),
+           nn.ReLU(),
+           nn.Conv2d(64, 64, 3, padding=1),
+           nn.ReLU(),
+       )
+
+       self.conv_last = nn.Conv2d(64, 1, 1)
+
+   def center_crop(self, layer, target_h, target_w):
+       _, _, h, w = layer.size()
+       diff_y = h - target_h
+       diff_x = w - target_w
+       cropped = layer[
+           :,
+           :,
+           diff_y // 2 : diff_y // 2 + target_h,
+           diff_x // 2 : diff_x // 2 + target_w,
+       ]
+       return cropped
+
+   def forward(self, x):
+       # Encoder
+       enc1 = self.enc1(x)
+       pool1 = self.pool1(enc1)
+
+       enc2 = self.enc2(pool1)
+       pool2 = self.pool2(enc2)
+
+       enc3 = self.enc3(pool2)
+       pool3 = self.pool3(enc3)
+
+       # Bottleneck
+       bottleneck = self.bottleneck(pool3)
+
+       # Decoder
+       up3 = self.up3(bottleneck)
+       enc3_cropped = self.center_crop(enc3, up3.size(2), up3.size(3))
+
+
+
+                                                                         22
+                          ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+       cat3 = torch.cat([up3, enc3_cropped], dim=1)
+       dec3 = self.dec3(cat3)
+
+       up2 = self.up2(dec3)
+       enc2_cropped = self.center_crop(enc2, up2.size(2), up2.size(3))
+       cat2 = torch.cat([up2, enc2_cropped], dim=1)
+       dec2 = self.dec2(cat2)
+
+       up1 = self.up1(dec2)
+       enc1_cropped = self.center_crop(enc1, up1.size(2), up1.size(3))
+       cat1 = torch.cat([up1, enc1_cropped], dim=1)
+       dec1 = self.dec1(cat1)
+
+       out = self.conv_last(dec1)
+       out = torch.sigmoid(out)
+       return out
+
+
+# Instantiate model, loss function, optimizer
+model = UNet().to(device)
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=1e-4)
+
+# Training loop
+num_epochs = 5
+for epoch in range(num_epochs):
+    model.train()
+    running_loss = 0.0
+    for inputs, targets in train_loader:
+        inputs = inputs.to(device)
+        targets = targets.to(device)
+
+       optimizer.zero_grad()
+       outputs = model(inputs)
+       loss = criterion(outputs, targets)
+       loss.backward()
+       optimizer.step()
+
+       running_loss += loss.item() * inputs.size(0)
+   epoch_loss = running_loss / len(train_loader.dataset)
+   print(f"Epoch {epoch+1}/{num_epochs}, Training Loss: {epoch_loss:.6f}")
+
+   # Validation
+   model.eval()
+   val_loss = 0.0
+   with torch.no_grad():
+       for inputs, targets in val_loader:
+           inputs = inputs.to(device)
+           targets = targets.to(device)
+
+          outputs = model(inputs)
+          loss = criterion(outputs, targets)
+          val_loss += loss.item() * inputs.size(0)
+   val_loss /= len(val_loader.dataset)
+   print(f"Epoch {epoch+1}/{num_epochs}, Validation Loss: {val_loss:.6f}")
+
+
+# Compute RMSE on validation set
+def compute_rmse(model, loader):
+    model.eval()
+    mse = 0.0
+    num_pixels = 0
+    with torch.no_grad():
+        for inputs, targets in loader:
+            inputs = inputs.to(device)
+            targets = targets.to(device)
+            outputs = model(inputs)
+            mse += F.mse_loss(outputs, targets, reduction="sum").item()
+            num_pixels += targets.numel()
+    rmse = math.sqrt(mse / num_pixels)
+    return rmse
+
+
+rmse = compute_rmse(model, val_loader)
+print(f"Validation RMSE: {rmse}")
+
+# Predict on test images
+model.eval()
+test_images = sorted(glob.glob("./test/*.png"))
+ids = []
+vals = []
+transform = transforms.Compose([transforms.ToTensor()])
+for img_path in test_images:
+    img = Image.open(img_path).convert("L")
+    img_id = os.path.basename(img_path).split(".")[0]
+    input_tensor = transform(img).unsqueeze(0).to(device)
+    # Pad the input tensor to next multiple of 8
+    _, _, h, w = input_tensor.size()
+    new_h = ((h - 1) // 8 + 1) * 8
+    new_w = ((w - 1) // 8 + 1) * 8
+    pad_h = new_h - h
+    pad_w = new_w - w
+
+
+
+                                                                             23
+                          ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+   padding = (0, pad_w, 0, pad_h) # left, right, top, bottom
+   input_tensor = F.pad(input_tensor, padding)
+   with torch.no_grad():
+       output = model(input_tensor)
+   # Unpad the output tensor
+   output = output[:, :, :h, :w]
+   output = output.squeeze().cpu().numpy()
+   # Ensure values are between 0 and 1
+   output = np.clip(output, 0, 1)
+   h, w = output.shape
+   for i in range(h):
+       for j in range(w):
+           ids.append(f"{img_id}_{i+1}_{j+1}")
+           vals.append(output[i, j])
+
+# Create submission dataframe
+submission = pd.DataFrame({"id": ids, "value": vals})
+
+# Ensure the submission matches the sample submission format
+sample_submission = pd.read_csv("./sampleSubmission.csv")
+submission = submission.merge(sample_submission[["id"]], on="id", how="right")
+submission = submission.fillna(0)
+submission = submission[["id", "value"]]
+
+# Save submission
+submission.to_csv("./submission.csv", index=False)
+print("Submission file saved to ./submission.csv")
+
+# Print validation RMSE
+print(f"Final Validation RMSE: {rmse}")
+
+
+
+C.5.3. ML-AGENT T RAJECTORY ON denoising-dirty-documents
+
+                                          Partial trajectory of ML-Agent on denoising-dirty-documents
+==================== Step 7 ====================
+Reflection: The modified training script executed successfully, and the validation RMSE has improved to approximately 0.0838. This is a slight improvement
+       compared to the previous RMSE of 0.0884. However, it still does not meet the target of reducing the RMSE below 0.01. The training loss decreased
+       consistently over the epochs, indicating that the model is learning effectively. Further modifications are necessary to achieve the desired performance.
+Research Plan and Status: 1. Understand the ‘train.py‘ script: Completed. The model architecture, training process, hyperparameters, and evaluation methods have
+       been identified.
+2. Identify potential modifications: Completed. The first modification (changing the learning rate) has been implemented and evaluated. The second modification (
+       increasing the number of epochs) has been implemented and evaluated. The third modification (changing the optimizer) has been implemented and evaluated.
+3. Implement modifications: The optimizer has been modified in ‘train_modified_optimizer.py‘, resulting in a validation RMSE of approximately 0.0838.
+4. Iterate: I will now explore further modifications, such as adjusting the batch size or experimenting with different learning rates, to further reduce the RMSE.
+
+Current Status: Step 3 is completed. I will now proceed to step 4 and explore further modifications to the training script.
+Fact Check: 1. The validation RMSE after changing the optimizer is approximately 0.0838. (Confirmed)
+Thought: I will experiment with adjusting the learning rate from 1e-4 to 1e-5, as a smaller learning rate may help the model converge more effectively and
+       potentially lead to a lower RMSE.
+
+Action: Edit Script (AI)
+Action Input: {
+    "script_name": "train_modified_optimizer.py",
+    "edit_instruction": "Change the learning rate from 1e-4 to 1e-5.",
+    "save_name": "train_modified_optimizer_lr.py"
+}
+Observation: The edited file is saved to train_modified_optimizer_lr.py. Here is the diff, please check if the edit is correct and desirable:
+
+---
++++
+@@ -223,7 +223,7 @@
+ # Instantiate model, loss function, optimizer
+ model = UNet().to(device)
+ criterion = nn.MSELoss()
+-optimizer = optim.RMSprop(model.parameters(), lr=1e-4)
++optimizer = optim.RMSprop(model.parameters(), lr=1e-5)
+
+# Training loop
+num_epochs = 10
+
+==================== Step 8 ====================
+Reflection: The modification to change the learning rate from 1e-4 to 1e-5 has been successfully made. This change aims to allow the model to converge more
+       effectively, potentially leading to a reduction in the RMSE. The next step is to execute the modified training script to evaluate its impact on the RMSE.
+Research Plan and Status: 1. Understand the ‘train.py‘ script: Completed. The model architecture, training process, hyperparameters, and evaluation methods have
+       been identified.
+2. Identify potential modifications: Completed. The first modification (changing the learning rate) has been implemented and evaluated. The second modification (
+       increasing the number of epochs) has been implemented and evaluated. The third modification (changing the optimizer) has been implemented and evaluated.
+       The fourth modification (changing the learning rate) has been implemented.
+3. Implement modifications: The learning rate has been modified in ‘train_modified_optimizer_lr.py‘.
+4. Iterate: Execute the modified script to evaluate the impact on RMSE.
+
+Current Status: Step 3 is completed. I will now proceed to step 4 and execute the modified training script.
+Fact Check: 1. The learning rate has been changed from 1e-4 to 1e-5. (Confirmed)
+Thought: I will execute the modified training script ‘train_modified_optimizer_lr.py‘ to see if changing the learning rate leads to an improvement in the RMSE on
+       the validation set.
+
+Action: Execute Script
+Action Input: {
+    "script_name": "train_modified_optimizer_lr.py"
+
+
+
+                                                                                 24
+                          ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+}
+Observation: Epoch 1/10, Training Loss: 0.208905
+Epoch 1/10, Validation Loss: 0.202602
+Epoch 2/10, Training Loss: 0.168855
+Epoch 2/10, Validation Loss: 0.110859
+Epoch 3/10, Training Loss: 0.107715
+Epoch 3/10, Validation Loss: 0.101807
+Epoch 4/10, Training Loss: 0.102095
+Epoch 4/10, Validation Loss: 0.099179
+Epoch 5/10, Training Loss: 0.096579
+Epoch 5/10, Validation Loss: 0.096960
+Epoch 6/10, Training Loss: 0.097088
+Epoch 6/10, Validation Loss: 0.093844
+Epoch 7/10, Training Loss: 0.091358
+Epoch 7/10, Validation Loss: 0.090865
+Epoch 8/10, Training Loss: 0.090154
+Epoch 8/10, Validation Loss: 0.086134
+Epoch 9/10, Training Loss: 0.084577
+Epoch 9/10, Validation Loss: 0.080215
+Epoch 10/10, Training Loss: 0.075586
+Epoch 10/10, Validation Loss: 0.068712
+Validation RMSE: 0.26212960276846825
+Submission file saved to ./submission.csv
+Final Validation RMSE: 0.26212960276846825
+
+==================== Step 9 ====================
+Reflection: The modified training script executed successfully, but the validation RMSE has increased to approximately 0.2621, which is a significant regression
+       compared to the previous RMSE of 0.0838. This indicates that reducing the learning rate to 1e-5 may have hindered the model’s ability to learn effectively
+       within the given epochs. It suggests that the learning rate might be too low for this specific model and dataset, leading to slower convergence or getting
+       stuck in local minima.
+Research Plan and Status: 1. Understand the ‘train.py‘ script: Completed. The model architecture, training process, hyperparameters, and evaluation methods have
+       been identified.
+2. Identify potential modifications: Completed. The first modification (changing the learning rate) has been implemented and evaluated. The second modification (
+       increasing the number of epochs) has been implemented and evaluated. The third modification (changing the optimizer) has been implemented and evaluated.
+       The fourth modification (changing the learning rate) has been implemented and evaluated.
+3. Implement modifications: The learning rate has been modified in ‘train_modified_optimizer_lr.py‘, resulting in a validation RMSE of approximately 0.2621.
+4. Iterate: I will revert the learning rate back to 1e-4 and explore other modifications, such as adjusting the batch size or experimenting with different
+       optimizers, to further reduce the RMSE.
+
+Current Status: Step 3 is completed. I will now proceed to step 4 and revert the learning rate back to 1e-4 in the training script.
+Fact Check: 1. The validation RMSE after changing the learning rate to 1e-5 is approximately 0.2621. (Confirmed)
+Thought: I will revert the learning rate back to 1e-4 in the script and execute it again to see if returning to the previous learning rate improves the RMSE.
+
+Action: Edit Script (AI)
+Action Input: {
+    "script_name": "train_modified_optimizer_lr.py",
+    "edit_instruction": "Change the learning rate back from 1e-5 to 1e-4.",
+    "save_name": "train_reverted_lr.py"
+}
+Observation: The edited file is saved to train_reverted_lr.py. Here is the diff, please check if the edit is correct and desirable:
+
+---
++++
+@@ -223,7 +223,7 @@
+ # Instantiate model, loss function, optimizer
+ model = UNet().to(device)
+ criterion = nn.MSELoss()
+-optimizer = optim.RMSprop(model.parameters(), lr=1e-5)
++optimizer = optim.RMSprop(model.parameters(), lr=1e-4)
+
+# Training loop
+num_epochs = 10
+
+
+
+C.5.4. A NALYSIS
+As shown in C.5.3, we see that ML-Agent automatically initiates backtracking mechanisms when performance metrics
+remain unimproved by proposed modifications. It tries to use a smaller learning rate in step 7 but finds the RMSE increases
+after executing the code in step 8. Thus, it tries to revert the learning rate back out its initial value in step 9. We also show
+some step examples on different tasks in this section, which shows that ML-Agent can generate diverse action sequences
+through comprehensive reasoning. As a comparison, other models (such as GPT-4o) sometimes fail to understand the
+requirement and submit the answer after only one modification(sometimes even no modification).
+                                                          Some step examples on different tasks
+==================== Step 13 ====================
+Reflection: The observation indicates that the validation MAE is currently at 18678, which is significantly above the target of 5000. This suggests that the
+       feature engineering steps taken so far, including the logarithmic transformations, have not sufficiently improved the model’s performance. Further
+       modifications are needed to reduce the MAE.
+Research Plan and Status: 1. Understand the train.py script: Completed. The current features and model have been identified.
+2. Feature Engineering: Logarithmic transformations were applied to skewed numerical features, but the validation MAE remains high at 18678.
+3. Model Evaluation: The model’s performance needs further improvement, as the validation MAE is still above the target.
+4. Iterate: I will explore additional feature engineering techniques, such as creating new interaction features or transforming existing features further.
+
+Current Status: The validation MAE is still above the target, and I will now consider creating additional interaction features or transforming existing features
+       to see if that helps reduce the MAE.
+Fact Check: 1. The validation MAE is confirmed to be 18678, as confirmed by the observation.
+
+
+
+                                                                               25
+                          ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+Thought: I will edit the ‘train.py‘ script to create additional interaction features between some of the existing features, which may help improve the model’s
+       performance.
+
+Action: Edit Script (AI)
+Action Input: {
+    "script_name": "train.py",
+    "edit_instruction": "Create new interaction features by multiplying ’OverallQual’ with ’GrLivArea’ and ’TotalBsmtSF’ with ’GarageCars’. Add these new features
+           to the dataset.",
+    "save_name": "train.py"
+}
+Observation: The edited file is saved to train.py. Here is the diff, please check if the edit is correct and desirable:
+
+---
++++
+@@ -30,6 +30,10 @@
+     ’YearBuilt_TotalBsmtSF’, ’YearBuilt_GrLivArea’,
+     ’TotalBsmtSF_GrLivArea’
+ ]
++
++# Add new interaction features
++interaction_features.append(’OverallQual_GrLivArea’)
++interaction_features.append(’TotalBsmtSF_GarageCars’)
+
+for feature in interaction_features:
+    cols = feature.split(’_’)
+
+
+                                                          Some step examples on different tasks
+    ==================== Step 5 ====================
+Reflection: The modified training script with data augmentation has been executed successfully. However, the validation RMSE is 0.36237191602303853, which is
+       still significantly above the target of 0.01. This indicates that while data augmentation may have improved the training process, it was not sufficient to
+       achieve the desired performance.
+
+Next, I will consider another modification to further reduce the RMSE. Given the potential areas for improvement identified earlier, I will explore increasing the
+        model complexity by adding more layers to the U-Net architecture. This could help the model learn more complex patterns in the data.
+Research Plan and Status: 1. Understand the ‘train.py‘ script: Completed. The script uses a modified U-Net for image denoising with a fixed learning rate and no
+       data augmentation.
+2. Identify potential modifications: Identified several potential modifications, including learning rate scheduling, data augmentation, model complexity,
+       regularization, and early stopping.
+3. Implement the modification: Completed. A learning rate scheduler has been added to the training loop.
+4. Evaluate results: Completed. The validation RMSE after the learning rate scheduler modification is 0.2463417127589059.
+5. Next modification: Completed. Data augmentation has been added to the training data transformation pipeline.
+6. Evaluate results again: Completed. The validation RMSE after data augmentation is 0.36237191602303853.
+7. Next modification: I will increase the model complexity by adding more layers to the U-Net architecture.
+
+Current Status:
+- Step 1 is completed.
+- Step 2 is completed.
+- Step 3 is completed.
+- Step 4 is completed.
+- Step 5 is completed.
+- Step 6 is completed.
+- Step 7 is in progress as I will now modify the script to increase model complexity.
+Fact Check: 1. The final validation RMSE after the data augmentation modification is 0.36237191602303853. (Confirmed)
+Thought: I will proceed to modify the ‘train.py‘ script to increase the complexity of the U-Net model by adding additional convolutional layers and possibly
+       increasing the number of filters in existing layers. This should help the model capture more complex features and potentially reduce the RMSE.
+
+Action: Edit Script (AI)
+Action Input: {
+    "script_name": "train.py",
+    "edit_instruction": "Increase the complexity of the U-Net model by adding two additional convolutional layers with 64 filters each after the existing layers.
+           Also, increase the number of filters in the first layer to 32.",
+    "save_name": "train_with_complex_model.py"
+}
+Observation: The edited file is saved to train_with_complex_model.py. Here is the diff, please check if the edit is correct and desirable:
+
+---
++++
+@@ -115,63 +115,87 @@
+        super(UNet, self).__init__()
+        # Encoder
+        self.enc1 = nn.Sequential(
+- nn.Conv2d(1, 64, 3, padding=1),
+- nn.ReLU(),
+- nn.Conv2d(64, 64, 3, padding=1),
++ nn.Conv2d(1, 32, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(32, 32, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(32, 32, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(32, 32, 3, padding=1),
+            nn.ReLU(),
+        )
+        self.pool1 = nn.MaxPool2d(2, 2)
+
+        self.enc2 = nn.Sequential(
++ nn.Conv2d(32, 64, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(64, 64, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(64, 64, 3, padding=1),
+
+
+
+                                                                               26
+                          ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
++ nn.ReLU(),
++ nn.Conv2d(64, 64, 3, padding=1),
++ nn.ReLU(),
++ )
++ self.pool2 = nn.MaxPool2d(2, 2)
++
++ self.enc3 = nn.Sequential(
+            nn.Conv2d(64, 128, 3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(128, 128, 3, padding=1),
+            nn.ReLU(),
+- )
+- self.pool2 = nn.MaxPool2d(2, 2)
+-
+- self.enc3 = nn.Sequential(
+- nn.Conv2d(128, 256, 3, padding=1),
+- nn.ReLU(),
+- nn.Conv2d(256, 256, 3, padding=1),
++ nn.Conv2d(128, 128, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(128, 128, 3, padding=1),
+            nn.ReLU(),
+        )
+        self.pool3 = nn.MaxPool2d(2, 2)
+
+        # Bottleneck
+        self.bottleneck = nn.Sequential(
+- nn.Conv2d(256, 512, 3, padding=1),
+- nn.ReLU(),
+- nn.Conv2d(512, 512, 3, padding=1),
++ nn.Conv2d(128, 256, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(256, 256, 3, padding=1),
+            nn.ReLU(),
+        )
+
+        # Decoder
+- self.up3 = nn.ConvTranspose2d(512, 256, 2, stride=2)
++ self.up3 = nn.ConvTranspose2d(256, 128, 2, stride=2)
+        self.dec3 = nn.Sequential(
+- nn.Conv2d(512, 256, 3, padding=1),
+- nn.ReLU(),
+- nn.Conv2d(256, 256, 3, padding=1),
+- nn.ReLU(),
+- )
+-
+- self.up2 = nn.ConvTranspose2d(256, 128, 2, stride=2)
++ nn.Conv2d(256, 128, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(128, 128, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(128, 128, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(128, 128, 3, padding=1),
++ nn.ReLU(),
++ )
++
++ self.up2 = nn.ConvTranspose2d(128, 64, 2, stride=2)
+        self.dec2 = nn.Sequential(
+- nn.Conv2d(256, 128, 3, padding=1),
+- nn.ReLU(),
+- nn.Conv2d(128, 128, 3, padding=1),
+- nn.ReLU(),
+- )
+-
+- self.up1 = nn.ConvTranspose2d(128, 64, 2, stride=2)
++ nn.Conv2d(128, 64, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(64, 64, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(64, 64, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(64, 64, 3, padding=1),
++ nn.ReLU(),
++ )
++
++ self.up1 = nn.ConvTranspose2d(64, 32, 2, stride=2)
+        self.dec1 = nn.Sequential(
+- nn.Conv2d(128, 64, 3, padding=1),
+- nn.ReLU(),
+- nn.Conv2d(64, 64, 3, padding=1),
+- nn.ReLU(),
+- )
+-
+- self.conv_last = nn.Conv2d(64, 1, 1)
++ nn.Conv2d(64, 32, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(32, 32, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(32, 32, 3, padding=1),
++ nn.ReLU(),
++ nn.Conv2d(32, 32, 3, padding=1),
+
+
+
+                                                              27
+                          ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
++ nn.ReLU(),
++ )
++
++ self.conv_last = nn.Conv2d(32, 1, 1)
+
+     def center_crop(self, layer, target_h, target_w):
+         _, _, h, w = layer.size()
+@@ -323,4 +347,4 @@
+ print("Submission file saved to ./submission.csv")
+
+ # Print validation RMSE
+-print(f"Final Validation RMSE: {rmse}")
++print(f"Final Validation RMSE: {rmse}")
+
+                                                          Some step examples on different tasks
+==================== Step 7 ====================
+Reflection: The modified training script has been executed successfully, but the quadratic weighted kappa score achieved is 0.7418, which is slightly lower than
+       the previous score of 0.7431. This indicates that the changes made to the learning rate and the number of boosting stages did not lead to an improvement in
+        performance. Further modifications are necessary to enhance the model’s performance.
+Research Plan and Status: 1. Understand the ‘train.py‘ script: Completed. The model architecture, training process, and hyperparameters have been identified.
+2. Experiment with modifications: Completed. The learning rate was changed to 0.05 and the number of boosting stages increased to 200, but the performance
+       decreased slightly.
+3. Evaluate performance: Completed. The modified training script was executed, resulting in a validation quadratic weighted kappa score of 0.7418.
+4. Iterate: I will now explore further modifications to improve the model’s performance.
+
+Current Status:
+- Step 4 is in progress. I will consider additional modifications, such as trying different feature extraction techniques or adjusting other hyperparameters, to
+       enhance the model’s performance.
+
+Next Step: I will try to modify the feature extraction process again by using a different vectorization method, such as using a more advanced model like Sentence-
+       BERT, which may capture more contextual information from the essays. However, since we cannot directly modify the vectorization method in the current setup,
+        I will consider using a simpler approach like averaging the TF-IDF scores across different n-grams.
+Fact Check: 1. The validation quadratic weighted kappa score achieved after the third modification is 0.7418. (Confirmed by observation)
+Thought: I will proceed to modify the ‘train.py‘ script to implement a different feature extraction method that averages the TF-IDF scores across different n-
+       grams. This change aims to improve the model’s performance.
+
+Action: Edit Script (AI)
+Action Input: {
+    "script_name": "train.py",
+    "edit_instruction": "Modify the feature extraction process to average the TF-IDF scores across different n-grams (bigrams and trigrams) instead of using the
+           default TF-IDF vectorization.",
+    "save_name": "train_feature_extraction_modified.py"
+}
+Observation: The edited file is saved to train_feature_extraction_modified.py. Here is the diff, please check if the edit is correct and desirable:
+
+---
++++
+@@ -10,10 +10,22 @@
+ train_df = pd.read_csv("./train.csv")
+ test_df = pd.read_csv("./test.csv")
+
+-# Prepare the features using TF-IDF vectorization
+-tfidf = TfidfVectorizer(max_features=10000)
+-X = tfidf.fit_transform(train_df["full_text"])
+-X_test = tfidf.transform(test_df["full_text"])
++# Prepare the features using TF-IDF vectorization with bigrams and trigrams
++tfidf_unigrams = TfidfVectorizer(max_features=5000, ngram_range=(1, 1))
++tfidf_bigrams = TfidfVectorizer(max_features=5000, ngram_range=(2, 2))
++tfidf_trigrams = TfidfVectorizer(max_features=5000, ngram_range=(3, 3))
++
++X_unigrams = tfidf_unigrams.fit_transform(train_df["full_text"])
++X_bigrams = tfidf_bigrams.fit_transform(train_df["full_text"])
++X_trigrams = tfidf_trigrams.fit_transform(train_df["full_text"])
++
++X_test_unigrams = tfidf_unigrams.transform(test_df["full_text"])
++X_test_bigrams = tfidf_bigrams.transform(test_df["full_text"])
++X_test_trigrams = tfidf_trigrams.transform(test_df["full_text"])
++
++# Average the TF-IDF scores across unigrams, bigrams, and trigrams
++X = (X_unigrams + X_bigrams + X_trigrams) / 3
++X_test = (X_test_unigrams + X_test_bigrams + X_test_trigrams) / 3
+ y = train_df["score"]
+
+ # Split the data into training and validation sets
+@@ -52,4 +64,4 @@
+ submission = pd.DataFrame({"essay_id": test_df["essay_id"], "score": test_pred_round})
+
+ # Save the submission file
+-submission.to_csv("./submission.csv", index=False)
++submission.to_csv("./submission.csv", index=False)
+
+                                                          Some step examples on different tasks
+==================== Step 1 ====================
+Reflection: The observation provides a comprehensive overview of the ‘train.py‘ script, detailing its structure, the model used, and the training process. It
+       highlights the key components such as data reading, label mapping, data splitting, text vectorization, model training, prediction, and evaluation. However,
+        it also notes that there is no preprocessing of text data before vectorization, no feature selection or dimensionality reduction, and no cross-validation
+       or hyperparameter tuning. This indicates potential areas for improvement.
+Research Plan and Status: 1. Understand the ‘train.py‘ script: Completed. The script uses a ‘LogisticRegression‘ model and lacks preprocessing and tuning steps.
+2. Identify potential modifications:
+   - **First Modification**: Implement text preprocessing (tokenization, stopword removal, stemming/lemmatization) before vectorization to improve feature
+
+
+
+                                                                               28
+                          ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+          representation.
+3. Implement the modification: Modify the script to include text preprocessing.
+4. Iterate: After implementing the first modification, run the training process and evaluate the impact on loss. If the loss does not improve, consider further
+       modifications.
+
+Current Status: The first modification has been identified and will be implemented next.
+Fact Check: 1. The script uses a ‘LogisticRegression‘ classifier for the text classification task. (Confirmed)
+2. The script lacks preprocessing of text data before vectorization. (Confirmed)
+3. The script does not perform feature selection or dimensionality reduction. (Confirmed)
+4. The script does not include cross-validation or hyperparameter tuning. (Confirmed)
+Thought: I will proceed to modify the ‘train.py‘ script to include text preprocessing steps before the vectorization process. This should help improve the model’s
+        performance by providing better features.
+
+Action: Edit Script (AI)
+Action Input: {
+    "script_name": "train.py",
+    "edit_instruction": "Add text preprocessing steps before vectorization. Use NLTK for tokenization, stopword removal, and stemming. Specifically, import nltk
+           and use nltk’s tokenization, stopwords, and PorterStemmer. Apply these steps to the text data before vectorization.",
+    "save_name": "train.py"
+}
+Observation: The edited file is saved to train.py. Here is the diff, please check if the edit is correct and desirable:
+
+---
++++
+@@ -5,6 +5,14 @@
+ from sklearn.linear_model import LogisticRegression
+ from sklearn.metrics import log_loss
+ import os
++import nltk
++from nltk.tokenize import word_tokenize
++from nltk.corpus import stopwords
++from nltk.stem import PorterStemmer
++
++# Download NLTK data files (only need to run once)
++nltk.download(’punkt’)
++nltk.download(’stopwords’)
+
+ # Read the data
+ train = pd.read_csv("./train.csv")
+@@ -13,6 +21,22 @@
+ # Preprocess labels
+ author_mapping = {"EAP": 0, "HPL": 1, "MWS": 2}
+ train["author_num"] = train["author"].map(author_mapping)
++
++# Initialize NLTK components
++stop_words = set(stopwords.words(’english’))
++stemmer = PorterStemmer()
++
++# Define a function for text preprocessing
++def preprocess_text(text):
++ # Tokenize the text
++ tokens = word_tokenize(text.lower())
++ # Remove stopwords and apply stemming
++ tokens = [stemmer.stem(word) for word in tokens if word.isalpha() and word not in stop_words]
++ return ’ ’.join(tokens)
++
++# Apply preprocessing to the text data
++train["text"] = train["text"].apply(preprocess_text)
++test["text"] = test["text"].apply(preprocess_text)
+
+ # Split the data into training and validation sets
+ X_train, X_val, y_train, y_val = train_test_split(
+@@ -53,4 +77,4 @@
+ submission = submission[["id", "EAP", "HPL", "MWS"]]
+
+ # Save submission
+-submission.to_csv("./submission.csv", index=False)
++submission.to_csv("./submission.csv", index=False)
+
+
+                                        gpt-4o trajectory on detecting-insults-in-social-commentary
+==================== Step 0 ====================
+Reflection: The task involves understanding and modifying a machine learning script, ‘train.py‘, to improve its performance on a dataset related to detecting
+       insults in social commentary. The dataset includes training and test sets, and a sample submission file. The evaluation metric is AUC, and predictions
+       should be in the range [0,1]. We are to make incremental modifications to the script to improve performance, keeping epochs to 10 or less and not altering
+       the random seed.
+
+Research Plan and Status:
+1. **Understand the current state of the ‘train.py‘ script**: Not started.
+2. Identify areas in the script that could be modified to improve model performance: Not started.
+3. Make one modification at a time to the script and test the effect on performance: Not started.
+4. Aim to achieve a test accuracy of 99.99%: Not started.
+
+Fact Check: None, as no progress has been made yet.
+
+Thought: The first step is to understand the current state of the ‘train.py‘ script to identify potential areas for improvement. This will involve inspecting the
+       script to see what model and techniques are currently being used.
+
+Action: List Files
+Action Input: {
+    "dir_path": "."
+}
+
+
+
+                                                                               29
+                          ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+Observation: backup/
+test.csv
+train.csv
+train.py
+
+==================== Step 1 ====================
+Reflection: The directory contains the ‘train.py‘ script, alongside ‘train.csv‘ and ‘test.csv‘, which are the training and testing datasets, respectively. There
+       is also a ‘backup/‘ directory, which might contain backup files or previous versions of scripts.
+
+Research Plan and Status:
+1. **Understand the current state of the ‘train.py‘ script**: Not started.
+2. Identify areas in the script that could be modified to improve model performance: Not started.
+3. Make one modification at a time to the script and test the effect on performance: Not started.
+4. Aim to achieve a test accuracy of 99.99%: Not started.
+
+Fact Check: The presence of ‘train.py‘, ‘train.csv‘, ‘test.csv‘, and ‘backup/‘ is directly confirmed by the file listing.
+
+Thought: The next step is to inspect the ‘train.py‘ script to understand the current implementation. This will help identify potential areas for improvement.
+
+Action: Inspect Script Lines
+Action Input: {
+    "script_name": "train.py",
+    "start_line_number": 1,
+    "end_line_number": 100
+}
+Observation: Here are the lines (the file ends at line 122):
+
+import pandas as pd
+import random
+import torch
+import numpy as np
+from torch.utils.data import DataLoader, Dataset
+import torch.nn as nn
+import torch.optim as optim
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import accuracy_score
+
+# Set the random seed for reproducibility
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+set_seed(0)
+
+# Device configuration
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Define a dataset class
+class TextDataset(Dataset):
+    def __init__(self, texts, targets):
+        self.texts = texts
+        self.targets = targets
+
+   def __len__(self):
+       return len(self.texts)
+
+   def __getitem__(self, idx):
+       return self.texts[idx], self.targets[idx]
+
+# Define the neural network model
+class SimpleNNClassifier(nn.Module):
+    def __init__(self, input_dim):
+        super(SimpleNNClassifier, self).__init__()
+        self.fc1 = nn.Linear(input_dim, 64)
+        self.fc2 = nn.Linear(64, 32)
+        self.fc3 = nn.Linear(32, 1)
+
+   def forward(self, x):
+       x = torch.relu(self.fc1(x))
+       x = torch.relu(self.fc2(x))
+       x = torch.sigmoid(self.fc3(x))
+       return x.squeeze()
+
+# Train the model
+def train_model(X_train, y_train):
+    train_dataset = TextDataset(torch.FloatTensor(X_train), torch.FloatTensor(y_train))
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True,num_workers=4)
+
+   model = SimpleNNClassifier(input_dim=X_train.shape[1]).to(device)
+   criterion = nn.BCELoss()
+   optimizer = optim.SGD(model.parameters(), lr=0.1,momentum=0.9)
+
+   for epoch in range(10):
+       model.train()
+
+       for texts, targets in train_loader:
+           texts, targets = texts.to(device), targets.to(device)
+
+
+
+                                                                                30
+                          ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering
+
+          optimizer.zero_grad()
+          outputs = model(texts)
+          loss = criterion(outputs, targets)
+          loss.backward()
+          optimizer.step()
+
+       y_test_pred = predict(model, X_test_tfidf)
+       test_acc = accuracy_score(y_test, y_test_pred)
+       print(f"Epoch {epoch} | Test Accuracy: {test_acc*100:.2f}%")
+
+   return model
+
+# Predict function
+def predict(model, X):
+    X_tensor = torch.FloatTensor(X).to(device)
+    model.eval()
+    with torch.no_grad():
+        y_pred = model(X_tensor).cpu().numpy()
+    return (y_pred > 0.5).astype(int)
+
+# Main script
+if __name__ == ’__main__’:
+    train_data = pd.read_csv("train.csv")
+    test_data = pd.read_csv("test.csv")
+
+   X = train_data[’Comment’]
+   y = train_data[’Insult’].values
+
+   X_test_comments = test_data[’Comment’]
+   y_test = test_data[’Insult’].values
+
+   vectorizer = TfidfVectorizer(stop_words=’english’, max_features=500)
+   X_tfidf = vectorizer.fit_transform(X).toarray()
+   X_test_tfidf = vectorizer.transform(X_test_comments).toarray()
+
+==================== Step 2 ====================
+Reflection: The ‘train.py‘ script sets up a simple neural network using PyTorch to classify comments as insults or not based on text data. It uses TF-IDF to
+       vectorize the text and a simple feedforward neural network with two hidden layers. The model is trained over 10 epochs with a batch size of 32 using
+       stochastic gradient descent (SGD) with a learning rate of 0.1 and momentum of 0.9. The script also includes a function to set random seeds for
+       reproducibility and uses a binary cross-entropy loss function.
+
+Research Plan and Status:
+1. **Understand the current state of the ‘train.py‘ script**: Completed. The script uses a simple neural network with TF-IDF features.
+2. Identify areas in the script that could be modified to improve model performance: Not started.
+3. Make one modification at a time to the script and test the effect on performance: Not started.
+4. Aim to achieve a test accuracy of 99.99%: Not started.
+
+Fact Check:
+- The script uses TF-IDF vectorization and a simple neural network confirmed by inspection.
+- The script trains the model for 10 epochs, confirmed by inspection.
+- The learning rate is 0.1 with SGD optimizer, confirmed by inspection.
+
+Thought: The next step is to identify potential areas in the script that can be modified to improve performance. Possible areas include model architecture,
+       feature extraction, optimization parameters, and data preprocessing.
+
+Action: Final Answer
+Action Input: {
+    "final_answer": "The ‘train.py‘ script uses TF-IDF vectorization and a simple feedforward neural network with two hidden layers to classify comments as insults
+           . It uses SGD with a learning rate of 0.1 and momentum of 0.9, training for 10 epochs. The key areas for potential improvement include model
+           architecture, feature extraction, optimization parameters, and data preprocessing."
+}
+Observation: end
+
+
+
+
+                                                                               31
+

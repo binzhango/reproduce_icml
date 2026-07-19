@@ -1,0 +1,6 @@
+claim,short,v1_source_supported,v2_source_supported,verdict,blocker
+1,"7B ML-Agent outperforms DeepSeek-R1, GPT-4o, and GPT-4o-mini agents",True,True,reported_v1_not_independently_reproduced,No ML-Agent checkpoint or runnable evaluation code is released.
+2,Training uses 9 tasks and evaluation uses 10 held-out multimodal tasks,True,True,task_split_source_verified_generalization_not_reproduced,"Task membership is auditable, but trained weights and evaluation trajectories are absent."
+3,CIFAR-10 average 68.88% and best 81.45%,True,True,reported_v1_metric_replaced_in_v2_not_reproduced,"v2 reports relative gain rather than the v1 absolute accuracy, and no checkpoint/evaluator is released."
+4,Generate at least 100 ideas and retain 10 behaviorally distant ideas,True,True,reported_and_mechanism_independently_testable,Original candidate pools and embeddings are unreleased; reproduction uses a disclosed synthetic corpus.
+5,"v1 reward is 0 for errors, 0.5 for corner cases, sigmoid-scaled for successful edits",True,True,v1_formula_verified_and_executable_v2_materially_changed,The reward implementation is unreleased; equations can nevertheless be implemented exactly.

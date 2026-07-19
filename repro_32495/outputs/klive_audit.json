@@ -1,0 +1,61 @@
+{
+  "audit_date": "2026-07-18",
+  "source_scope": "Independent consistency and URL audit of the competition IDs/dates transcribed from paper Tables 13-14; not an audit of undisclosed model training corpora.",
+  "total_competitions": 25,
+  "tier1_deadline_competitions": 13,
+  "tier2_perpetual_competitions": 12,
+  "tier1_open_by_reported_deadline_month": [],
+  "tier1_closed_by_reported_deadline_month_count": 13,
+  "cutoff_matrix_recalculated": {
+    "Gemini 3 Flash Preview": {
+      "pass": 13,
+      "fail": 0,
+      "same_month_uncertain": 0
+    },
+    "DeepSeek-V3.2": {
+      "pass": 13,
+      "fail": 0,
+      "same_month_uncertain": 0
+    },
+    "Claude Sonnet 4.6": {
+      "pass": 13,
+      "fail": 0,
+      "same_month_uncertain": 0
+    },
+    "Kimi K2.5 (release-date proxy)": {
+      "pass": 0,
+      "fail": 8,
+      "same_month_uncertain": 5
+    }
+  },
+  "kaggle_url_http_status": {
+    "ai-mathematical-olympiad-progress-prize-3": 200,
+    "hull-tactical-market-prediction": 200,
+    "recodai-luc-scientific-image-forgery-detection": 200,
+    "llm-agentic-legal-information-retrieval": 200,
+    "deep-past-initiative-machine-translation": 200,
+    "stanford-rna-3d-folding-2": 200,
+    "vesuvius-challenge-surface-detection": 200,
+    "med-gemma-impact-challenge": 200,
+    "wbc-bench-2026": 200,
+    "urban-flood-modelling": 200,
+    "playground-series-s6e1": 200,
+    "bidding-predictions-for-construction": 200,
+    "nfl-big-data-bowl-2026-prediction": 200,
+    "spaceship-titanic": 200,
+    "store-sales-time-series-forecasting": 200,
+    "llm-classification-finetuning": 200,
+    "digit-recognizer": 200,
+    "house-prices-advanced-regression-techniques": 200,
+    "nlp-getting-started": 200,
+    "connectx": 200,
+    "tpu-getting-started": 200,
+    "contradictory-my-dear-watson": 200,
+    "gan-getting-started": 200,
+    "home-data-for-ml-course": 200,
+    "landmark-recognition-2021": 200
+  },
+  "release_url": "https://github.com/mireskandari/klive",
+  "release_url_observation": "Repository returned not found during this audit.",
+  "contamination_conclusion": "Dates can reduce a temporal contamination route but cannot establish contamination-free status without disclosure of model training corpora; the paper itself uses 'minimal' and 'not airtight' qualifiers."
+}

@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "title": "Repro - Investigating Component Contributions in Multi-Agent ML Systems",
+  "emoji": "🎯",
+  "space_id": "binzhango/repro-investigating-component-contributions",
+  "paper": {
+    "arxiv_id": "N/A (OpenReview-only: FOfvTwBGUX)",
+    "openreview_id": "FOfvTwBGUX",
+    "paper_number": "32495",
+    "title": "Investigating Component Contributions in Multi-Agent ML Systems"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-FOfvTwBGUX"
+  ],
+  "updated_at": "2026-07-18T09:47:41+00:00",
+  "root": {
+    "slug": "index",
+    "title": "Repro - Investigating Component Contributions in Multi-Agent ML Systems",
+    "file": "pages/index.md",
+    "children": [
+      {
+        "slug": "claim-1-iterative-feedback-vs-architectural-complexity",
+        "title": "Claim 1 - Iterative feedback vs architectural complexity",
+        "file": "pages/claim-1-iterative-feedback-vs-architectural-complexity/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-2-multi-agent-coordination",
+        "title": "Claim 2 - Multi-agent coordination",
+        "file": "pages/claim-2-multi-agent-coordination/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-3-k-live-benchmark-audit",
+        "title": "Claim 3 - K-LIVE benchmark audit",
+        "file": "pages/claim-3-k-live-benchmark-audit/page.md",
+        "children": []
+      },
+      {
+        "slug": "conclusion",
+        "title": "Conclusion",
+        "file": "pages/conclusion/page.md",
+        "children": []
+      },
+      {
+        "slug": "icml-32495-component-ablation",
+        "title": "icml-32495-component-ablation",
+        "file": "pages/icml-32495-component-ablation/page.md",
+        "children": []
+      }
+    ]
+  },
+  "agent_view_tokens": 5008,
+  "revision": "1784368061478358000"
+}

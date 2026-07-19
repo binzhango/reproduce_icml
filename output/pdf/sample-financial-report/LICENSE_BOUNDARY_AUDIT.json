@@ -1,0 +1,47 @@
+{
+  "overall": "PASS",
+  "reviewed_on": "2026-07-18",
+  "scope": {
+    "financial_skill": ".agents/skills/financial-report-generator",
+    "generated_report": "output/pdf/sample-financial-report/sample-financial-report.pdf",
+    "pdf_sha256": "ed97824ccb827118d2d9051c0a8328880c20741124bdd78d71c0168cd535f424",
+    "comparison_reference": "posterly"
+  },
+  "checks": [
+    {
+      "name": "identical-file-hash-comparison",
+      "status": "PASS",
+      "detail": "Compared 9 financial-skill files with 456 files under Posterly; no identical SHA-256 file hashes were found."
+    },
+    {
+      "name": "posterly-specific-identifiers",
+      "status": "PASS",
+      "detail": "No Posterly, Trackio, AGPL, ARIS, poster_check, render_preview, run_gates, data-measure-role, or Posterly template identifiers occur in the financial skill or generated package."
+    },
+    {
+      "name": "dependency-boundary",
+      "status": "PASS",
+      "detail": "The financial scripts import Python standard-library modules plus the independently installed Playwright package; they do not import Posterly modules or tools."
+    },
+    {
+      "name": "template-boundary",
+      "status": "PASS",
+      "detail": "The financial template is a multi-page semantic financial document with original selectors and component structure; it does not use Posterly templates or measurement-role contracts."
+    },
+    {
+      "name": "standalone-render",
+      "status": "PASS",
+      "detail": "The final PDF was rerendered with a standalone temporary Playwright environment rather than the Posterly project environment."
+    },
+    {
+      "name": "pdf-content-and-metadata",
+      "status": "PASS",
+      "detail": "Extracted PDF text and PDF metadata contain no Posterly attribution, AGPL notice, Posterly identifier, or Posterly asset reference."
+    }
+  ],
+  "notes": [
+    "This is a technical provenance review, not a legal opinion.",
+    "Generic ideas such as structured input validation, paged HTML, PDF rendering, and quality controls are not evidence of copied source code or templates.",
+    "No license has been assigned to the new financial skill; choose its distribution license separately before publishing it."
+  ]
+}

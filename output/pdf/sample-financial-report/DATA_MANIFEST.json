@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-07-18T22:19:42+00:00",
+  "company": "Northstar Components, Inc.",
+  "period_end": "2026-06-30",
+  "input": {
+    "path": ".agents/skills/financial-report-generator/assets/example-input.json",
+    "sha256": "56124f087a68142ed160276f26bfce425600c410603d246127657dcae82cd2ce"
+  },
+  "template": {
+    "path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/.agents/skills/financial-report-generator/assets/monthly-report.html",
+    "sha256": "5c2ae4fbdb9c25118c2873997eda907322e7fd7d12dc2eb228ca53658a249d95"
+  },
+  "sources": [
+    {
+      "id": "gl-2026-06",
+      "label": "June 2026 general-ledger close export",
+      "as_of": "2026-06-30",
+      "path": "finance/close/2026-06/gl-summary.csv"
+    },
+    {
+      "id": "ops-2026-06",
+      "label": "June 2026 operating KPI snapshot",
+      "as_of": "2026-06-30",
+      "path": "operations/kpi/2026-06.json"
+    }
+  ],
+  "formulas": {
+    "gross_profit": "revenue - cost_of_revenue",
+    "operating_income": "gross_profit - operating_expenses",
+    "pretax_income": "operating_income - interest_expense",
+    "net_income": "pretax_income - tax_expense",
+    "total_assets": "current assets + property_plant_equipment + other_assets",
+    "total_liabilities": "current liabilities + long_term_debt + other_liabilities",
+    "net_change": "operating_cash_flow + investing_cash_flow + financing_cash_flow"
+  }
+}

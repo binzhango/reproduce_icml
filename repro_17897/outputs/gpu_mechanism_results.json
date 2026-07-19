@@ -1,0 +1,63 @@
+{
+  "job": {
+    "id": "6a5830b6b1669a49bf0767d3",
+    "url": "https://huggingface.co/jobs/binzhango/6a5830b6b1669a49bf0767d3",
+    "hardware": "t4-small",
+    "status": "COMPLETED",
+    "total_seconds": 64,
+    "running_seconds": 48
+  },
+  "scope": "Independent mechanism reproduction with synthetic candidate ideas, not a full ML-Agent checkpoint or benchmark reproduction.",
+  "backend": "sentence-transformer",
+  "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+  "seed": 17897,
+  "candidate_count": 120,
+  "selection_size": 10,
+  "random_trials": 5000,
+  "selection": {
+    "v1_mean_distance": {
+      "indices": [51, 79, 59, 6, 36, 42, 72, 58, 96, 52],
+      "ideas": [
+        "freeze backbone",
+        "graph messagepassing",
+        "LightGBM",
+        "impute median",
+        "bucket sequence length",
+        "vision transformer",
+        "knowledge distillation",
+        "CatBoost",
+        "exponential moving average",
+        "unfreeze backbone"
+      ],
+      "metrics": {
+        "mean_pairwise_cosine_distance": 0.964722752571106,
+        "minimum_pairwise_cosine_distance": 0.20335984230041504,
+        "axis_coverage": 3,
+        "axis_counts": {"data": 2, "learning": 1, "model": 7}
+      }
+    },
+    "v2_global_fps_diagnostic": {
+      "indices": [51, 7, 59, 20, 80, 114, 106, 9, 72, 99],
+      "metrics": {
+        "mean_pairwise_cosine_distance": 0.9644887447357178,
+        "minimum_pairwise_cosine_distance": 0.8771902322769165,
+        "axis_coverage": 3,
+        "axis_counts": {"data": 3, "learning": 4, "model": 3}
+      },
+      "note": "Global farthest-point sampling is a diagnostic proxy; arXiv v2 describes applying farthest-point sampling within three semantic axes."
+    }
+  },
+  "random_baseline": {
+    "mean": 0.8642730932831765,
+    "std": 0.02692800972606479,
+    "p95": 0.9059677660465241,
+    "max": 0.9442906975746155
+  },
+  "reward_cases": {
+    "invalid_runtime_error": {"v1": 0.0, "v2": -1.0},
+    "corner_nonedit": {"v1": 0.5, "v2": 0.0},
+    "genuine_improvement": {"v1": 0.8807970779778823, "v2": 0.02},
+    "no_change": {"v1": 0.5, "v2": 0.0},
+    "regression": {"v1": 0.11920292202211755, "v2": -0.02}
+  }
+}

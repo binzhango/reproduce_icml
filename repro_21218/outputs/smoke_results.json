@@ -1,0 +1,17 @@
+{
+  "evidence_scope": "dependency-free local source/JSON smoke test; not claim evidence",
+  "python": "3.12.13",
+  "required_functions": [
+    "expert_prune",
+    "expert_prune_by_step",
+    "finetune"
+  ],
+  "sparsity_config": {
+    "experts": 64,
+    "fraction": 0.5,
+    "preserved": 32
+  },
+  "status": "ok",
+  "upstream_commit": "03fdea9ac627bb8e6a3f1f5243a1eb6008605198",
+  "upstream_file": "upstream_STEP/step/pruning/expert_prune.py"
+}

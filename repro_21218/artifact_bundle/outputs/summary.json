@@ -1,0 +1,26 @@
+{
+  "job_url": "https://huggingface.co/jobs/binzhango/6a5b5027bee6ee1cf4ecf1aa",
+  "bucket_result": "https://huggingface.co/buckets/binzhango/icml-21218-step-repro/gpu_results.json",
+  "scope": "scaled proxy: released OLMoE-1B-active/7B-total, not paper Qwen3-30B-A3B",
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "expert_sparsity": 0.5,
+  "parameter_reduction_fraction": 0.4653998508804359,
+  "cuda_allocated_reduction_fraction": 0.46424941217049837,
+  "baseline_perplexity": 9.619923421921586,
+  "pruned_perplexity": 20.91713811772839,
+  "loss_delta": 0.7767325242360434,
+  "loss_delta_bootstrap_95ci": [
+    0.55533763418595,
+    1.0123536581794421
+  ],
+  "throughput_speedup": 1.2330683541768486,
+  "throughput_speedup_bootstrap_95ci": [
+    1.2246629797539745,
+    1.2479412745878289
+  ],
+  "pruning_seconds": 246.88018622400705,
+  "pruning_under_10_minutes": true,
+  "approximate_job_cost_usd": 0.24097222222222223,
+  "claim_1_verdict": "PARTIAL/PROXY: memory direction reproduced; minimal quality degradation not reproduced at released scale",
+  "claim_2_verdict": "PARTIAL/PROXY: pruning completed under 10 minutes; 1.5x throughput not reproduced at released scale"
+}

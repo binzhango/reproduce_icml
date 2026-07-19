@@ -1,0 +1,12 @@
+{
+  "sections": [
+    "executive-summary",
+    "income-statement",
+    "balance-sheet",
+    "cash-flow",
+    "controls-and-provenance"
+  ],
+  "horizontal_overflow": [],
+  "status": "PASS",
+  "pdf": "/Users/binzhang/vibe_coding_repo/reproduce_icml/output/pdf/sample-financial-report/sample-financial-report.pdf"
+}

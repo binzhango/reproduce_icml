@@ -1,0 +1,27 @@
+{
+  "n_task_seed_pairs": 3,
+  "mean_scores": {
+    "multi_agent": 0.9766781938423295,
+    "single_iterative": 0.9761545816520506,
+    "single_no_feedback": 0.9709587623781548
+  },
+  "iteration_gain_mean": 0.005195819273895637,
+  "iteration_gain_std": 0.010389537530896744,
+  "coordination_delta_mean": 0.0005236121902788549,
+  "coordination_delta_std": 0.0009069229170253992,
+  "multi_agent_helps": 1,
+  "multi_agent_hurts": 0,
+  "multi_agent_ties": 2,
+  "claim1_proxy_supported": true,
+  "claim2_proxy_supported": false,
+  "model": "mock",
+  "rounds": 2,
+  "tasks": [
+    "breast_cancer",
+    "wine",
+    "digits"
+  ],
+  "wall_time_seconds": 14.8217191696167,
+  "hardware": "local-mock",
+  "scope_label": "toy-smoke"
+}

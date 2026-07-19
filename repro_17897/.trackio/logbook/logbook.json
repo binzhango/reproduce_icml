@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "title": "Repro - ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering",
+  "emoji": "🎯",
+  "space_id": "binzhango/repro-ml-agent-autonomous-ml-engineering",
+  "paper": {
+    "arxiv_id": "2505.23723"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-kcPPWaoegr"
+  ],
+  "updated_at": "2026-07-16T01:51:25+00:00",
+  "root": {
+    "slug": "index",
+    "title": "Repro - ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering",
+    "file": "pages/index.md",
+    "children": [
+      {
+        "slug": "source-reproducibility-audit",
+        "title": "Source & Reproducibility Audit",
+        "file": "pages/source-reproducibility-audit/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-1-7b-ml-agent-vs-larger-agents",
+        "title": "Claim 1: 7B ML-Agent vs Larger Agents",
+        "file": "pages/claim-1-7b-ml-agent-vs-larger-agents/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-2-nine-task-training-and-generalization",
+        "title": "Claim 2: Nine-Task Training and Generalization",
+        "file": "pages/claim-2-nine-task-training-and-generalization/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-3-cifar-10-accuracy",
+        "title": "Claim 3: CIFAR-10 Accuracy",
+        "file": "pages/claim-3-cifar-10-accuracy/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-4-exploration-enriched-idea-selection",
+        "title": "Claim 4: Exploration-Enriched Idea Selection",
+        "file": "pages/claim-4-exploration-enriched-idea-selection/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-5-ml-specific-reward",
+        "title": "Claim 5: ML-Specific Reward",
+        "file": "pages/claim-5-ml-specific-reward/page.md",
+        "children": []
+      },
+      {
+        "slug": "conclusion",
+        "title": "Conclusion",
+        "file": "pages/conclusion/page.md",
+        "children": []
+      },
+      {
+        "slug": "ml-agent-repro-17897-artifacts",
+        "title": "ml-agent-repro-17897-artifacts",
+        "file": "pages/ml-agent-repro-17897-artifacts/page.md",
+        "children": []
+      }
+    ]
+  },
+  "agent_view_tokens": 4397,
+  "revision": "1784166685178793000"
+}

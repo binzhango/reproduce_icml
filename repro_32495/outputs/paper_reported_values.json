@@ -1,0 +1,26 @@
+{
+  "provenance": "Transcribed from paper PDF Tables 6, 7, 9, and 11; source confirmation only",
+  "table6_klive_percentile": {
+    "C1_baseline": 81.3,
+    "C2_no_iteration": 47.2,
+    "C3_multi_agent": 72.8,
+    "C4_memory": 82.1,
+    "C5_planning": 81.9
+  },
+  "table7_iteration_scaling": {
+    "1": 47.2,
+    "3": 65.8,
+    "5": 74.1,
+    "10": 81.3
+  },
+  "table11_tier1": {
+    "C1": 79.2,
+    "C2": 44.8,
+    "C3": 70.4
+  },
+  "table11_tier2": {
+    "C1": 83.6,
+    "C2": 49.8,
+    "C3": 75.4
+  }
+}

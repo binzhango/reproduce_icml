@@ -1,0 +1,67 @@
+{
+  "emoji": "🧪",
+  "created_at": "2026-07-17T00:00:00+00:00",
+  "paper": {
+    "arxiv_id": "2505.23723"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-kcPPWaoegr",
+    "independent-execution"
+  ],
+  "autosync": true,
+  "private": false,
+  "last_page": "conclusion",
+  "local_path_artifacts": [
+    {
+      "path": "outputs/scaled_suite/execution_matrix.csv",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897_v2/outputs/scaled_suite/execution_matrix.csv",
+      "size": 562538,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "outputs/scaled_suite/execution_matrix.partial.csv",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897_v2/outputs/scaled_suite/execution_matrix.partial.csv",
+      "size": 562538,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "outputs/scaled_suite/heldout_results.csv",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897_v2/outputs/scaled_suite/heldout_results.csv",
+      "size": 1713,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "outputs/scaled_suite/reward_events.csv",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897_v2/outputs/scaled_suite/reward_events.csv",
+      "size": 1698,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "outputs/scaled_suite_corrected/execution_matrix.csv",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897_v2/outputs/scaled_suite_corrected/execution_matrix.csv",
+      "size": 556443,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "outputs/scaled_suite_corrected/heldout_results.csv",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897_v2/outputs/scaled_suite_corrected/heldout_results.csv",
+      "size": 1860,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "outputs/scaled_suite_corrected/reward_events.csv",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897_v2/outputs/scaled_suite_corrected/reward_events.csv",
+      "size": 1697,
+      "artifact_type": "dataset"
+    }
+  ],
+  "local_dashboards": {
+    "ml-agent-repro-17897-v2-artifacts": null
+  },
+  "local_artifacts": [
+    "ml-agent-repro-17897-v2-artifacts/reproduction-bundle:v0"
+  ],
+  "space_id": "binzhango/repro-ml-agent-autonomous-ml-engineering-v2",
+  "artifacts_bucket": "binzhango/repro-ml-agent-autonomous-ml-engineering-v2-artifacts"
+}

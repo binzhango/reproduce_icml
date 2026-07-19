@@ -1,0 +1,44 @@
+{
+  "space_id": "binzhango/repro-beyond-text-to-sql-squirrel",
+  "emoji": "🎯",
+  "created_at": "2026-07-16T00:08:39+00:00",
+  "last_page": "claim-2-nine-task-training-and-held-out-generalization",
+  "paper": {
+    "arxiv_id": "2601.18119",
+    "openreview_id": "4ltyJqAHMg"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-4ltyJqAHMg"
+  ],
+  "local_path_artifacts": [
+    {
+      "path": "repro_579/outputs/table2_gm.csv",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_579/outputs/table2_gm.csv",
+      "size": 727,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "repro_579/outputs/toy_smoke/tasks.jsonl",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_579/outputs/toy_smoke/tasks.jsonl",
+      "size": 124514,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "repro_579/outputs/toy_smoke/predictions.jsonl",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_579/outputs/toy_smoke/predictions.jsonl",
+      "size": 30953,
+      "artifact_type": "dataset"
+    }
+  ],
+  "local_dashboards": {
+    "paper579-squirrel-toy": null,
+    "paper579-reproduction": null
+  },
+  "local_artifacts": [
+    "paper579-reproduction/repro-bundle:v0"
+  ],
+  "autosync": true,
+  "private": false,
+  "artifacts_bucket": "binzhango/repro-beyond-text-to-sql-squirrel-artifacts"
+}

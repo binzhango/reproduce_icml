@@ -1,0 +1,3 @@
+[submodule "posterly"]
+	path = posterly
+	url = https://github.com/gradio-app/posterly.git

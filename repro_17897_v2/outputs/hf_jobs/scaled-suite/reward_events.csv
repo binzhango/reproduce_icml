@@ -1,0 +1,15 @@
+task,outcome,delta,alpha,reward,feedback
+branch-test,invalid_action,,,0.0,action is outside the declared candidate action space
+branch-test,execution_error,,,0.0,ValueError: not-a-model
+branch-test,valid_non_edit,0.0,,0.5,list task metadata
+heldout-digits-shifted,corner_case,0.0,,0.5,fit_seconds=2.495935 exceeded predeclared p95 budget=0.590744
+heldout-cancer-half-features,successful_edit,0.0,8550.0,0.5,metric moved from 0.935673 to 0.935673; oracle=0.947368
+heldout-diabetes-above-median,successful_edit,0.0,6650.0,0.5,metric moved from 0.781955 to 0.781955; oracle=0.796992
+heldout-digits-noisy,successful_edit,-0.01666666666666672,6000.000000000021,3.720075976018404e-44,metric moved from 0.926190 to 0.909524; oracle=0.942857
+heldout-digits-noisy-parity,successful_edit,0.06428571428571428,1354.8387096774202,1.0,metric moved from 0.876190 to 0.940476; oracle=0.950000
+heldout-digits-shifted,successful_edit,0.021428571428571463,4666.666666666659,1.0,metric moved from 0.942857 to 0.964286; oracle=0.964286
+heldout-iris-setosa,successful_edit,0.0,0.0,0.5,metric moved from 1.000000 to 1.000000; oracle=1.000000
+heldout-text-computer-systems,successful_edit,-0.04047619047619044,8400.00000000003,2.1871378321957292e-148,metric moved from 0.838095 to 0.797619; oracle=0.850000
+heldout-text-religion,successful_edit,-0.04761904761904756,21000.000000000076,0.0,metric moved from 0.821429 to 0.773810; oracle=0.826190
+heldout-text-science,successful_edit,-0.02619047619047621,0.0,0.5,metric moved from 0.902381 to 0.876190; oracle=0.902381
+heldout-wine-class-zero,successful_edit,0.0,0.0,0.5,metric moved from 1.000000 to 1.000000; oracle=1.000000

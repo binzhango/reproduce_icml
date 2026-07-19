@@ -1,0 +1,15 @@
+task,outcome,delta,alpha,reward
+branch-test,invalid_action,,,0.0
+branch-test,execution_error,,,0.0
+branch-test,valid_non_edit,0.0,,0.5
+branch-test,corner_case,0.0,,0.5
+heldout-cancer-half-features,successful_edit,-0.0292397660818714,3420.000000000007,3.720075976019409e-44
+heldout-diabetes-above-median,successful_edit,0.0,1023.0769230769237,0.5
+heldout-digits-noisy,successful_edit,-0.0023809523809523725,0.0,0.5
+heldout-digits-noisy-parity,successful_edit,0.0,42000.00000000015,0.5
+heldout-digits-shifted,successful_edit,0.0023809523809523725,14000.00000000005,0.9999999999999967
+heldout-iris-setosa,successful_edit,0.0,0.0,0.5
+heldout-text-computer-systems,successful_edit,0.0,0.0,0.5
+heldout-text-religion,successful_edit,0.0,0.0,0.5
+heldout-text-science,successful_edit,0.0,0.0,0.5
+heldout-wine-class-zero,successful_edit,-0.01851851851851849,0.0,0.5

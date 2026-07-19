@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "skill": "posterly",
+  "timestamp": "2026-07-16T01:42:56Z",
+  "poster_html": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897/poster/poster.html",
+  "canvas": {
+    "source": "page-rule",
+    "width_cm": 152.4,
+    "height_cm": 91.44,
+    "orientation": "landscape",
+    "source_url": null
+  },
+  "overall": "PASS",
+  "hard_failures": 0,
+  "warnings": 0,
+  "gates": [
+    {
+      "name": "preflight",
+      "severity": "hard",
+      "status": "PASS",
+      "command": [
+        "/Users/binzhang/vibe_coding_repo/reproduce_icml/.venv/bin/python3",
+        "/private/tmp/posterly/tools/poster_check.py",
+        "preflight",
+        "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897/poster/poster.html"
+      ],
+      "summary": {
+        "exit_code": 0,
+        "tail": "[preflight] /Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897/poster/poster.html\n  problems: 0   warnings: 0\n[preflight] PASS"
+      },
+      "artifacts": []
+    },
+    {
+      "name": "style",
+      "severity": "hard",
+      "status": "PASS",
+      "command": [
+        "/Users/binzhang/vibe_coding_repo/reproduce_icml/.venv/bin/python3",
+        "/private/tmp/posterly/tools/style_check.py",
+        "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897/poster/poster.html",
+        "--disable",
+        "4,5",
+        "--json",
+        "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897/poster/style_check.json"
+      ],
+      "summary": {
+        "gate": "style",
+        "status": "PASS",
+        "rules": [
+          {
+            "id": 1,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 2,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 3,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 4,
+            "severity": "hard",
+            "status": "SKIPPED",
+            "detail": "disabled via --disable (rule 4)"
+          },
+          {
+            "id": 5,
+            "severity": "hard",
+            "status": "SKIPPED",
+            "detail": "disabled via --disable (rule 5)"
+          },
+          {
+            "id": 6,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 7,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 8,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 9,
+            "severity": "warn",
+            "status": "PASS",
+            "detail": "9 --fs-* token(s) defined"
+          },
+          {
+            "id": 10,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 11,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 12,
+            "severity": "warn",
+            "status": "PASS",
+            "detail": "dark area = 0.0% of poster (<= 8%)"
+          },
+          {
+            "id": 13,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          }
+        ]
+      },
+      "artifacts": [
+        "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897/poster/style_check.json"
+      ]
+    },
+    {
+      "name": "asset",
+      "severity": "hard",
+      "status": "NOT_RUN",
+      "command": [],
+      "summary": {
+        "not_run": "no --manifest: real-figure provenance gate opted out (NOT verified)"
+      },
+      "artifacts": []
+    },
+    {
+      "name": "measure",
+      "severity": "hard",
+      "status": "PASS",
+      "command": [
+        "/Users/binzhang/vibe_coding_repo/reproduce_icml/.venv/bin/python3",
+        "/private/tmp/posterly/tools/poster_check.py",
+        "measure",
+        "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897/poster/poster.html"
+      ],
+      "summary": {
+        "exit_code": 0,
+        "tail": "  col0    last-card-bottom =  3110.81 px\n  col1    last-card-bottom =  3110.62 px\n  col2    last-card-bottom =  3109.77 px\n  col3    last-card-bottom =  3109.98 px\n  spread = 1.05 px   (target < 5.0 px)\n  intercard gap in [22.67 (col0), 22.67 (col0)] px   (target [12.0, 50.0])\n  gap -> footer-strip in [41.89, 42.94] px   (target [30.0, 50.0])\n[measure] PASS"
+      },
+      "artifacts": []
+    },
+    {
+      "name": "polish",
+      "severity": "soft",
+      "status": "PASS",
+      "command": [
+        "/Users/binzhang/vibe_coding_repo/reproduce_icml/.venv/bin/python3",
+        "/private/tmp/posterly/tools/poster_check.py",
+        "polish",
+        "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_17897/poster/poster.html",
+        "--max-card-trailing",
+        "0.15",
+        "--strict"
+      ],
+      "summary": {
+        "exit_code": 0,
+        "tail": "  cards checked       : 14\n  inner-void cards    : 14\n  beside-text floats  : 0\n  flex/<br> parents   : 0\n  header logos        : 0\n  banner images       : 0\n  warnings            : 0\n[polish] PASS"
+      },
+      "artifacts": []
+    }
+  ]
+}

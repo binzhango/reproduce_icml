@@ -1,0 +1,6 @@
+{
+  "job_url": "https://huggingface.co/jobs/binzhango/6a5ae418bee6ee1cf4ece59a",
+  "script_revision": "67259e2f0261b7e2d315c9f4a12de79fd183f941",
+  "recovery": "Rows and FINAL_SUMMARY parsed verbatim from immutable Job stdout after final direct upload returned 403.",
+  "trial_count": 27
+}

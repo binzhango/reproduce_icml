@@ -1,0 +1,69 @@
+{
+  "protocol": {
+    "label": "scaled_cifar10_proxy_not_ml_agent",
+    "dataset": "CIFAR-10",
+    "synthetic": false,
+    "model": "CifarConvNet (fresh training; not ML-Agent/Qwen2.5-7B)",
+    "epochs": 12,
+    "train_limit": 50000,
+    "dataset_source_dir": "/inputs/datasets/cifar10",
+    "seeds": [
+      17897,
+      17898,
+      17899,
+      17900,
+      17901
+    ],
+    "device": "cuda",
+    "gpu_name": "NVIDIA A10G"
+  },
+  "measurement": {
+    "mean_accuracy": 0.8669,
+    "sample_sd": 0.0012529964086141839,
+    "best_run_accuracy": 0.868,
+    "worst_run_accuracy": 0.8653,
+    "ci95_half_width": 0.0010982997769279719,
+    "runs": [
+      {
+        "seed": 17897,
+        "final_accuracy": 0.868,
+        "best_epoch_accuracy": 0.868,
+        "test_samples": 10000,
+        "wall_seconds": 770.2633622650001
+      },
+      {
+        "seed": 17898,
+        "final_accuracy": 0.8658,
+        "best_epoch_accuracy": 0.8658,
+        "test_samples": 10000,
+        "wall_seconds": 765.703955893
+      },
+      {
+        "seed": 17899,
+        "final_accuracy": 0.8678,
+        "best_epoch_accuracy": 0.8678,
+        "test_samples": 10000,
+        "wall_seconds": 768.6867657140001
+      },
+      {
+        "seed": 17900,
+        "final_accuracy": 0.8653,
+        "best_epoch_accuracy": 0.8653,
+        "test_samples": 10000,
+        "wall_seconds": 766.4373543229995
+      },
+      {
+        "seed": 17901,
+        "final_accuracy": 0.8676,
+        "best_epoch_accuracy": 0.8676,
+        "test_samples": 10000,
+        "wall_seconds": 767.2020282789999
+      }
+    ]
+  },
+  "environment": {
+    "python": "3.12.12",
+    "torch": "2.13.0+cu130",
+    "cuda": "13.0"
+  }
+}

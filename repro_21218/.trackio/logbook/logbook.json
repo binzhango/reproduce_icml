@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "title": "Repro - Less Token, More Signal: MoE Expert Pruning via Critical Token Selection",
+  "emoji": "🎯",
+  "space_id": "binzhango/repro-less-token-more-signal-step",
+  "paper": {
+    "openreview_id": "4iupzej9nT",
+    "arxiv_id": "not-available",
+    "submission_number": "21218",
+    "title": "Less Token, More Signal: MoE Expert Pruning via Critical Token Selection"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-4iupzej9nT"
+  ],
+  "updated_at": "2026-07-18T10:47:39+00:00",
+  "root": {
+    "slug": "index",
+    "title": "Repro - Less Token, More Signal: MoE Expert Pruning via Critical Token Selection",
+    "file": "pages/index.md",
+    "children": [
+      {
+        "slug": "source-reproducibility-audit",
+        "title": "Source & Reproducibility Audit",
+        "file": "pages/source-reproducibility-audit/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-1-memory-and-quality-at-50-expert-sparsity",
+        "title": "Claim 1: Memory and quality at 50% expert sparsity",
+        "file": "pages/claim-1-memory-and-quality-at-50-expert-sparsity/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-2-throughput-and-pruning-time",
+        "title": "Claim 2: Throughput and pruning time",
+        "file": "pages/claim-2-throughput-and-pruning-time/page.md",
+        "children": []
+      },
+      {
+        "slug": "conclusion",
+        "title": "Conclusion",
+        "file": "pages/conclusion/page.md",
+        "children": []
+      },
+      {
+        "slug": "step-repro-21218-artifacts",
+        "title": "step-repro-21218-artifacts",
+        "file": "pages/step-repro-21218-artifacts/page.md",
+        "children": []
+      }
+    ]
+  },
+  "agent_view_tokens": 3601,
+  "revision": "1784371659703732000"
+}

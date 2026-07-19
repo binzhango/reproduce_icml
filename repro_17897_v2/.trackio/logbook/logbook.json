@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "title": "Repro - ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering",
+  "emoji": "🧪",
+  "space_id": "binzhango/repro-ml-agent-autonomous-ml-engineering-v2",
+  "paper": {
+    "arxiv_id": "2505.23723"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-kcPPWaoegr",
+    "independent-execution"
+  ],
+  "updated_at": "2026-07-18T01:59:27+00:00",
+  "root": {
+    "slug": "index",
+    "title": "Repro - ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering",
+    "file": "pages/index.md",
+    "children": [
+      {
+        "slug": "reproduction-contract-and-release-audit",
+        "title": "Reproduction Contract and Release Audit",
+        "file": "pages/reproduction-contract-and-release-audit/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-1-7b-ml-agent-vs-larger-agents",
+        "title": "Claim 1: 7B ML-Agent vs Larger Agents",
+        "file": "pages/claim-1-7b-ml-agent-vs-larger-agents/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-2-nine-task-training-and-held-out-generalization",
+        "title": "Claim 2: Nine-Task Training and Held-Out Generalization",
+        "file": "pages/claim-2-nine-task-training-and-held-out-generalization/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-3-cifar-10-accuracy",
+        "title": "Claim 3: CIFAR-10 Accuracy",
+        "file": "pages/claim-3-cifar-10-accuracy/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-4-behaviorally-distant-exploration",
+        "title": "Claim 4: Behaviorally Distant Exploration",
+        "file": "pages/claim-4-behaviorally-distant-exploration/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-5-ml-specific-reward-branches",
+        "title": "Claim 5: ML-Specific Reward Branches",
+        "file": "pages/claim-5-ml-specific-reward-branches/page.md",
+        "children": []
+      },
+      {
+        "slug": "conclusion",
+        "title": "Conclusion",
+        "file": "pages/conclusion/page.md",
+        "children": []
+      },
+      {
+        "slug": "ml-agent-repro-17897-v2-artifacts",
+        "title": "ml-agent-repro-17897-v2-artifacts",
+        "file": "pages/ml-agent-repro-17897-v2-artifacts/page.md",
+        "children": []
+      }
+    ]
+  },
+  "agent_view_tokens": 7331,
+  "revision": "1784339967578907000"
+}

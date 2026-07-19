@@ -1,0 +1,12 @@
+{
+  "paper": "ML-Agent: Reinforcing LLM Agents for Autonomous Machine Learning Engineering",
+  "openreview_id": "kcPPWaoegr",
+  "arxiv_id": "2505.23723",
+  "official_repo_commit": "15932e7525deb99d59f7416bbe8c75077cff3690",
+  "local_backend": "hash",
+  "gpu_backend": "sentence-transformers/all-MiniLM-L6-v2",
+  "candidate_count": 120,
+  "selection_size": 10,
+  "random_trials": 5000,
+  "classification": "partial reproduction with source verification and mechanism proxy"
+}

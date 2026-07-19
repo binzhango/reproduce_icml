@@ -1,0 +1,53 @@
+{
+  "source": "arXiv:2601.18119v1 PDF text extraction",
+  "table2_model_rows_excluding_sft": 24,
+  "paper_fragment_checks": {
+    "task_counts": true,
+    "seed_corpus": true,
+    "claude": true,
+    "deepseek_v3": true,
+    "qwen_32b": true,
+    "complexity": true
+  },
+  "claim_1": {
+    "syntax_tasks": 469,
+    "semantic_tasks": 516,
+    "seed_scripts": "1,000+",
+    "business_scenarios": 26,
+    "status": "reported values verified; official benchmark unavailable for recomputation"
+  },
+  "claim_2": {
+    "claude_syntax_gm": 36.46,
+    "claude_semantic_gm": 32.17,
+    "internal_typo": "Introduction prose says 33.17; abstract, Table 2, and Sec. 5.1 say 32.17",
+    "status": "verified from Table 2 and Sec. 5.1"
+  },
+  "claim_3": {
+    "deepseek_v3_syntax_gm": 30.28,
+    "deepseek_v3_semantic_gm": 21.32,
+    "qwen_2_5_coder_32b_semantic_gm": 23.45,
+    "syntax_below_20": 10,
+    "semantic_below_20": 15,
+    "either_track_below_20": 16,
+    "both_tracks_below_20": 9,
+    "denominator": 24,
+    "status": "model values verified; 'most below 20' is true per-track for semantic only and true if interpreted as below 20 on at least one track"
+  },
+  "claim_4": {
+    "syntax": {
+      "tokens": 496.9,
+      "lines": 163.69,
+      "functions": 21.62,
+      "ast_depth": 8.93,
+      "ast_width": 11.69
+    },
+    "semantic": {
+      "tokens": 425.93,
+      "lines": 141.58,
+      "functions": 17.34,
+      "ast_depth": 8.75,
+      "ast_width": 11.12
+    },
+    "status": "reported values verified; official scripts unavailable for recomputation"
+  }
+}

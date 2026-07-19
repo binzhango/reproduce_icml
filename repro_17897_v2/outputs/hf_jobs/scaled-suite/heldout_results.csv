@@ -1,0 +1,11 @@
+task,modality,agent_candidate,agent_score,global_candidate,global_score,random_mean,random_sd,oracle_candidate,oracle_score
+heldout-cancer-half-features,tabular,sgd-log_loss-a0.01,0.935672514619883,sgd-log_loss-a0.01,0.935672514619883,0.9251345029239765,0.01016822298076059,sgd-log_loss-a4.64e-06,0.935672514619883
+heldout-diabetes-above-median,tabular,sgd-log_loss-a0.01,0.7819548872180451,sgd-log_loss-a0.01,0.7819548872180451,0.6971804511278197,0.08559587375127735,linearsvc-c12.743-b1,0.7894736842105263
+heldout-digits-noisy,image,sgd-log_loss-a1.67e-05,0.9095238095238095,sgd-log_loss-a0.01,0.9261904761904762,0.9100988095238095,0.0139500936531127,knn-k15-distance,0.9333333333333333
+heldout-digits-noisy-parity,image,knn-k1-uniform,0.9404761904761905,sgd-log_loss-a0.01,0.8761904761904762,0.8832916666666666,0.04192026149663852,knn-k15-distance,0.9476190476190476
+heldout-digits-shifted,image,sgd-log_loss-a1.67e-05,0.9642857142857143,sgd-log_loss-a0.01,0.9428571428571428,0.9442619047619049,0.014534057911482812,sgd-log_loss-a1.67e-05,0.9642857142857143
+heldout-iris-setosa,tabular,knn-k31-uniform,1.0,sgd-log_loss-a0.01,1.0,1.0,0.0,logreg-c0.001-b0,1.0
+heldout-text-computer-systems,text,sgd-log_loss-a4.64e-06,0.7976190476190477,sgd-log_loss-a0.01,0.8380952380952381,0.7061607142857143,0.14044739677291995,sgd-log_loss-a0.01,0.8380952380952381
+heldout-text-religion,text,linearsvc-c12.743-b1,0.7738095238095238,sgd-log_loss-a0.01,0.8214285714285714,0.6842583333333333,0.10558010433034093,sgd-log_loss-a0.01,0.8214285714285714
+heldout-text-science,text,linearsvc-c12.743-b1,0.8761904761904762,sgd-log_loss-a0.01,0.9023809523809524,0.7507988095238095,0.160372270629095,sgd-log_loss-a0.01,0.9023809523809524
+heldout-wine-class-zero,tabular,sgd-log_loss-a0.01,1.0,sgd-log_loss-a0.01,1.0,0.9738055555555555,0.03798234891913227,knn-k15-distance,1.0

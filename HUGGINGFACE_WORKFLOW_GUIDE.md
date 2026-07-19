@@ -41,6 +41,128 @@ the evaluation completed, but its first publishing attempt returned HTTP 403
 because the token passed to the Job did not have write access. Compute success
 and artifact persistence are two separate success conditions.
 
+## 0. How this repository works
+
+This is not one Python package with one application entry point. It is a
+collection of independent reproduction workspaces. A directory such as
+`repro_21218/` or `repro_579/` represents one paper and carries its evidence
+from source material to a published, auditable result.
+
+The repository's real architecture is an evidence pipeline:
+
+```text
+paper PDF / official code
+        |
+        v
+claim audit + declared scope
+        |
+        v
+local smoke test -----> outputs/smoke*
+        |
+        v
+Hugging Face GPU Job -> immutable Job URL and logs
+        |
+        +-------------> dataset repo or Bucket (raw durable outputs)
+        |
+        v
+analysis scripts ----> JSON / CSV / SVG / HTML summaries
+        |
+        v
+Trackio metrics + artifacts + claim-oriented logbook pages
+        |
+        +-------------> published Trackio Space and artifact Bucket
+        |
+        v
+artifact_bundle/ + poster/ + manifest + gate reports
+```
+
+### The directory contract
+
+Not every reproduction needs every directory, but the mature workspaces follow
+the same convention:
+
+| Path | Role | Typical contents |
+| --- | --- | --- |
+| `repro_<id>/README.md` | Honest entry point | Paper identity, supported claims, limitations, and rerun commands |
+| `source/` | Frozen source evidence | Paper PDF/text, OpenReview metadata, extracted figures |
+| `official_repo/` or `upstream_*` | Author-code snapshot | Exact upstream implementation or released subset |
+| `configs/` | Declared experimental scope | Seeds, model IDs, scale reductions, claim mapping |
+| `scripts/` or top-level `*.py` | Executable reproduction | Source audit, smoke test, GPU harness, analysis, artifact logging |
+| `outputs/` | Machine-readable evidence | Raw JSON/CSV, predictions, summaries, plots, provenance |
+| `.trackio/` | Experiment narrative | Local metadata, claim pages, dashboard references, artifact cells |
+| `artifact_bundle/` | Downloadable handoff | Minimal self-contained code, source, results, poster, and manifest |
+| `poster/` or top-level poster files | Human-facing summary | HTML, PNG/PDF preview, QR link, style and gate reports |
+
+The `artifact_bundle/` is deliberately not a blind copy of the workspace. For
+example, [`repro_17897/artifact_bundle/MANIFEST.md`](repro_17897/artifact_bundle/MANIFEST.md)
+states that credentials, Trackio's local database, Git metadata, caches, and
+failed HTML responses are excluded. The result is portable evidence rather
+than a dump of one developer machine.
+
+### What each current reproduction demonstrates
+
+| Workspace | Scientific shape | HF/Trackio pattern |
+| --- | --- | --- |
+| `repro_17897/` | Source audit plus disclosed mechanism proxies | T4 Job, claim matrix, Trackio artifact bundle, published claim pages and poster |
+| `repro_17897_v2/` | Deeper scaled follow-up | Multiple GPU Jobs, staged data and artifacts in Buckets, compact v2 bundle |
+| `repro_21218/` | Released STEP code on a smaller OLMoE configuration | A100 Job, raw Bucket result, bootstrap analysis, Trackio artifact and poster |
+| `repro_32495/` | Scaled multi-agent component ablation | T4 Job, post-hoc Trackio import, raw-result artifact, claim logbook |
+| `repro_579/` | Source verification plus a deterministic SQL-debugging proxy | A10G Job, dataset-repo persistence, Trackio metrics, failure-recovery lesson |
+
+The scientific labels matter. A GPU Job proves that code ran; it does not by
+itself prove a paper claim. These workspaces distinguish source-confirmed
+claims, reduced proxies, and direct independent reproductions in their READMEs,
+summaries, and logbook pages.
+
+### One complete flow: `repro_32495`
+
+This workspace is a useful template for understanding the moving parts:
+
+1. [`repro_32495/PROTOCOL.md`](repro_32495/PROTOCOL.md) declares the three
+   experimental conditions, datasets, seeds, hardware, Job URL, and the limits
+   of the scaled proxy.
+2. [`repro_32495/run_ablation.py`](repro_32495/run_ablation.py) executes the
+   conditions, writes `trials.csv`, `details.json`, and `summary.json`, and logs
+   per-trial metrics with Trackio.
+3. The real GPU execution runs as a Hugging Face Job. The Job page preserves
+   the command, environment, status, and logs independently of the local tree.
+4. [`repro_32495/ingest_gpu_results.py`](repro_32495/ingest_gpu_results.py)
+   imports the immutable CSV/JSON output into Trackio. This recovery path is
+   valuable when the remote Job could write raw results but could not update a
+   Trackio Space live.
+5. `trackio.log_artifact(...)` registers the raw output directory as a dataset
+   artifact. Publishing the logbook promotes that artifact to its HF Bucket.
+6. `.trackio/logbook/pages/` organizes evidence into one page per claim plus a
+   conclusion. The index is only a table of contents.
+7. The poster and `artifact_bundle/` turn the same evidence into a conference
+   summary and a downloadable reproduction package; `GATE_REPORT.json` and
+   `style_check.json` record mechanical validation.
+
+### Starting a new `repro_<id>` workspace
+
+A practical sequence is:
+
+```bash
+mkdir repro_PAPER_ID
+cd repro_PAPER_ID
+
+# 1. Create the local experiment narrative before running expensive work.
+trackio logbook open --title "Repro - PAPER TITLE" --no-serve
+trackio logbook page "Source reproducibility audit"
+
+# 2. Add source, protocol, scripts, and a cheap smoke test.
+#    Record the exact command rather than running it invisibly.
+trackio logbook run --page "Source reproducibility audit" -- \
+  uv run verify_claims.py
+
+# 3. Submit the validated script to HF Jobs and persist raw outputs.
+# 4. Import or live-sync metrics into Trackio.
+# 5. Add claim verdict pages, conclusion, artifact bundle, and poster.
+```
+
+Do not publish the logbook until its pages have been checked for secrets,
+private paths, misleading evidence labels, and missing raw outputs.
+
 ## 1. One-time setup
 
 Install the current `hf` CLI and log in:
@@ -461,38 +583,324 @@ hf spaces restart USER/reproduction-viewer
 hf spaces settings USER/reproduction-viewer --sleep-time 300
 ```
 
-## 7. Use a Trackio Space for training metrics
+## 7. How Trackio is used in this repository
 
-For experiments, Trackio can create or sync a Space dashboard directly. This is
-the pattern used by the repository's GPU evaluation code:
+Trackio serves three related but different purposes here:
+
+1. **Metrics database and dashboard** — numeric values from a run.
+2. **Artifact registry** — versioned result directories that publish to an HF
+   Bucket with the logbook.
+3. **Reproduction logbook** — claim-oriented Markdown/code/figure/artifact
+   pages published as a static HF Space for humans and agents.
+
+Trackio does not submit the GPU Job and does not replace raw result storage. HF
+Jobs provide compute; Hub repositories or Buckets preserve raw files; Trackio
+connects those files and metrics to the scientific narrative.
+
+### Pattern A: log metrics live from the training or evaluation script
+
+[`repro_32495/run_ablation.py`](repro_32495/run_ablation.py) initializes one
+Trackio project, logs every measured condition, and logs final aggregate
+metrics. A minimal equivalent is:
 
 ```python
 import trackio
 
 trackio.init(
-    project="my-training-project",
-    name="baseline-a10g",
-    config={"model": "Qwen/Qwen2.5-Coder-1.5B-Instruct", "lr": 2e-5},
-    space_id="USER/my-training-dashboard",
+    project="icml-PAPER_ID-ablation",
+    name="gpu-proxy-seed-0",
+    config={
+        "model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+        "scope": "scaled-proxy",
+        "seed": 0,
+    },
+    space_id="USER/icml-PAPER_ID-ablation",
     private=True,
 )
 
-for step in range(10):
-    trackio.log({"step": step, "train_loss": 1.0 / (step + 1)})
+for step, result in enumerate(run_experiment()):
+    trackio.log(
+        {
+            "balanced_accuracy": result["score"],
+            "condition_id": result["condition_id"],
+            "seed": result["seed"],
+        },
+        step=step,
+    )
 
 trackio.finish()
 ```
 
-Add `trackio` to the UV dependencies and submit `HF_TOKEN` as a Job secret.
-For remote training, always set `space_id`; otherwise the dashboard database is
-only local to the temporary worker. Auto-created Trackio Spaces are public by
-default, so pass `private=True` for private metrics.
+For an HF Job, add `trackio` to the UV dependencies and pass `HF_TOKEN` as a
+secret. `space_id` tells Trackio to sync remotely; without it, metrics remain in
+the Job's temporary filesystem and disappear when the worker terminates.
+Auto-created Trackio Spaces are public by default, so pass `private=True` or
+pre-create the destination with the required visibility.
 
-Trackio is a presentation and tracking layer, not a substitute for preserving
-the model and raw result files. Upload those separately to a model/dataset repo
-or Bucket.
+### Pattern B: import completed Job outputs after the fact
 
-## 8. A reliable production checklist
+Live logging can fail even when the expensive computation succeeds. The
+repository therefore also uses a safer two-stage pattern:
+
+```text
+HF Job -> durable trials.csv + summary.json -> local import -> Trackio Space
+```
+
+[`repro_32495/ingest_gpu_results.py`](repro_32495/ingest_gpu_results.py) reads
+the completed Job output, replays each trial into Trackio, records the original
+Job URL in the run configuration, and registers the raw directory as an
+artifact. This preserves the distinction between immutable source data and the
+dashboard derived from it.
+
+```bash
+cd repro_32495
+uv run ingest_gpu_results.py \
+  --results outputs/gpu \
+  --job-url https://huggingface.co/jobs/USER/JOB_ID
+
+trackio list projects --json
+trackio list runs --project icml-32495-component-ablation --json
+trackio get run \
+  --project icml-32495-component-ablation \
+  --run qwen-1.5b-gpu-proxy-imported --json
+```
+
+Use post-hoc import when:
+
+- the Job token cannot create or update a Space;
+- the run has already completed;
+- metrics must be reconstructed from authoritative raw files;
+- the dashboard schema changed after the GPU work was done.
+
+### Register the downloadable artifact bundle
+
+The `log_bundle.py` scripts use Trackio artifacts rather than treating the
+bundle as an anonymous folder. For example,
+[`repro_21218/scripts/log_bundle.py`](repro_21218/scripts/log_bundle.py) does:
+
+```python
+from pathlib import Path
+import trackio
+
+bundle = Path("artifact_bundle")
+trackio.init(
+    project="step-repro-21218-artifacts",
+    name="complete-reproduction-bundle",
+    config={"scope": "released OLMoE proxy"},
+)
+trackio.log_artifact(
+    str(bundle),
+    name="reproduction-bundle",
+    type="dataset",
+    aliases=["challenge", "latest"],
+)
+trackio.finish()
+```
+
+When a logbook exists, `trackio.log_artifact()` automatically creates an
+artifact cell. On publication, Trackio pushes the artifact payload to the
+logbook's HF Bucket and rewrites the cell to the remote URL. Merely letting
+`trackio logbook run` detect an output file records a path reference; it does
+not upload that file. Use `log_artifact()` for anything that must travel with
+the published reproduction.
+
+### Understand the `.trackio/` directory
+
+Each reproduction keeps a local logbook such as:
+
+```text
+repro_579/.trackio/
+├── metadata.json
+└── logbook/
+    ├── logbook.json
+    ├── pages/index.md
+    ├── pages/claim-1-.../page.md
+    ├── pages/gpu-toy-debugging-experiment/page.md
+    ├── pages/conclusion/page.md
+    └── static viewer files
+```
+
+- `metadata.json` remembers the published Space, privacy, last page, local
+  dashboards, local artifacts, and artifact Bucket.
+- `pages/index.md` is a table of contents, not a findings page.
+- Each `page.md` contains typed cells encoded as Markdown comments plus their
+  human-readable body.
+- `logbook.json` is the structured page tree used by the viewer and agent
+  reader.
+
+The logbook complements `outputs/`: `outputs/` is authoritative data, while
+the logbook explains which claim that data supports, the execution context,
+and the verdict.
+
+### Work with the logbook
+
+```bash
+cd repro_579
+
+# Read a compact whole-logbook view suitable for an agent.
+trackio logbook read
+
+# Create/select a page and append findings.
+trackio logbook page "GPU toy debugging experiment"
+trackio logbook cell markdown \
+  "The A10G run completed; raw predictions are linked below."
+
+# Capture an exact local command, scripts, output, exit code, and duration.
+trackio logbook run --page "GPU toy debugging experiment" -- \
+  uv run toy_gpu_eval.py --mode smoke --output-dir outputs/toy_smoke
+
+# Preview locally before publishing.
+trackio logbook serve
+```
+
+Because the logbook stores ordinary files, they can be reviewed and edited
+directly. After direct edits to an already published logbook, run:
+
+```bash
+trackio logbook sync
+```
+
+### Publish with the correct privacy
+
+The first publish creates a public static Space immediately unless `--private`
+is supplied:
+
+```bash
+# Public challenge/research logbook
+trackio logbook publish USER/repro-PAPER_ID
+
+# Internal or sensitive logbook, dashboards, and artifacts
+trackio logbook publish USER/repro-PAPER_ID --private
+```
+
+After first publication, page/cell/run commands auto-sync. The Space is the
+reader-facing notebook; Trackio dashboards embedded in it remain the metric
+view; artifacts are stored in the associated Bucket. Always preview and scan
+for tokens, local absolute paths, private datasets, and unredacted samples
+before the first publish.
+
+### From the logbook to the poster
+
+The posters are another view of the same evidence, not an independent result.
+For example, [`repro_21218/poster/poster_build_notes.md`](repro_21218/poster/poster_build_notes.md)
+names the local Trackio logbook and raw GPU output as its content authority.
+Posterly generates the HTML poster, preview PNG/PDF, navigation hotspots, and
+gate reports. The finished poster is then stored as a pinned `Reproduction
+poster` figure cell on the Trackio conclusion page, and its QR code points back
+to the published logbook Space. This gives a conference reader a compact
+summary while preserving a path to claim pages, Job provenance, and raw
+artifacts.
+
+### Query metrics without opening a browser
+
+```bash
+# Local data
+trackio list projects --json
+trackio list runs --project PROJECT --json
+trackio get metric --project PROJECT --run RUN --metric loss --json
+
+# Published Space (`--space` is a global option and comes before the command)
+trackio --space USER/TRACKIO_SPACE list projects --json
+trackio --space USER/TRACKIO_SPACE get metric \
+  --project PROJECT --run RUN --metric loss --json
+
+# One-off aggregate over Trackio's local data
+trackio query project --project PROJECT \
+  --sql "SELECT run_name, MAX(step) AS last_step FROM metrics GROUP BY run_name" \
+  --json
+```
+
+JSON output is especially useful for agents and automated gates. A Trackio
+dashboard, artifact, or successful code cell improves provenance but does not
+turn a proxy into an independent reproduction; the claim page must still state
+scope and evidence honestly.
+
+## 8. How Hugging Face skills help Codex work with this repository
+
+An HF skill is a `SKILL.md` instruction package for an AI coding assistant. It
+is not a Python dependency, does not run a Job, and does not grant Hub access.
+It teaches the assistant which commands, safety rules, and workflow patterns to
+use when a task matches the skill.
+
+Project-local skills live under `.agents/skills/`, so an assistant working in
+this repository can discover them automatically. This checkout contains:
+
+| Skill directory | Purpose in this repository |
+| --- | --- |
+| `.agents/skills/hf-cli/` | Current `hf` syntax for auth, downloads, Jobs, repos, Buckets, Spaces, and skills |
+| `.agents/skills/trackio/` | Metric logging, alerts, dashboard sync, querying, artifacts, and logbooks |
+| `.agents/skills/reproduction-logbook-judge/` | Repository-specific scientific and submission audit of a Trackio reproduction logbook |
+| `.agents/skills/financial-report-generator/` | Unrelated to the ICML reproduction flow |
+
+The `hf-cli` skill is generated from the installed CLI, which reduces stale
+command examples. The Trackio skill adds the higher-level experiment workflow
+that raw CLI help cannot explain. The reproduction judge is a local extension:
+it separates paper transcription from independent evidence and checks the
+claim pages, raw outputs, artifacts, conclusion, and poster requirements.
+
+### Install or update skills
+
+Run these commands from the repository root:
+
+```bash
+# Generate the project-local hf-cli skill in .agents/skills/.
+hf skills add
+
+# Install the current Trackio marketplace skill.
+hf skills add huggingface-trackio
+
+# Inspect the marketplace and installed locations.
+hf skills list
+
+# Refresh installed marketplace skills and regenerate hf-cli when needed.
+hf skills update
+hf skills add --force
+```
+
+Use `--global` only when the same skill should apply to every repository on the
+machine. Project-local installation is preferable here because collaborators
+can inspect the exact instructions associated with the reproduction workflow.
+Project-local skills are still ordinary files: add `.agents/skills/` to Git if
+collaborators should receive them with the repository; otherwise they exist
+only in the current checkout.
+
+### How to invoke the skills as a user
+
+Skills normally trigger from the task description, but naming the desired
+skill makes the boundary explicit. Good requests include:
+
+```text
+Use the hf-cli skill to prepare an A10G Job command for
+repro_32495/run_ablation.py. Do not submit it yet.
+
+Use the hugging-face-trackio skill to add loss, GPU utilization, and NaN alerts
+to this training script, then show how to query the metrics as JSON.
+
+Use the reproduction-logbook-judge skill to audit repro_21218 read-only and
+report which claims are source-confirmed, proxy-level, or independently tested.
+```
+
+The request should still specify authorization boundaries such as “prepare but
+do not submit,” “use a private Space,” or “audit read-only.” Skills improve how
+the agent performs a task; they do not broaden what the agent is allowed to
+change or publish.
+
+### Recommended skill-assisted workflow for a new reproduction
+
+1. Ask the agent to use `hf-cli` to inspect authentication, hardware, expected
+   storage, and prepare a smoke Job.
+2. Ask it to use Trackio to instrument metrics and alerts before submitting
+   expensive work.
+3. Run locally through `trackio logbook run` so failed and successful attempts
+   retain exact commands and outputs.
+4. Submit the remote Job only after the smoke path passes; persist raw outputs
+   independently of Trackio.
+5. Import or sync Trackio metrics, register the artifact bundle, and build one
+   claim page per paper claim.
+6. Run the reproduction-logbook judge before publication; fix scientific
+   evidence gaps before cosmetic issues.
+
+## 9. A reliable production checklist
 
 Before submission:
 
@@ -536,4 +944,5 @@ After submission:
 - [Gradio Spaces](https://huggingface.co/docs/hub/en/spaces-sdks-gradio)
 - [Trackio documentation](https://huggingface.co/docs/trackio/index)
 
-Commands in this guide were checked against `hf` 1.24.0 on 2026-07-19.
+Commands in this guide were checked against `hf` 1.24.0 and Trackio 0.31.5 on
+2026-07-19.

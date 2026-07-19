@@ -1,0 +1,4 @@
+interface:
+  display_name: "Financial Report Generator"
+  short_description: "Generate validated monthly financial reports"
+  default_prompt: "Use $financial-report-generator to build a monthly management report from my financial data."

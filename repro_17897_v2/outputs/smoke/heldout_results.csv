@@ -1,0 +1,11 @@
+task,modality,agent_candidate,agent_score,global_candidate,global_score,random_mean,random_sd,oracle_candidate,oracle_score
+heldout-cancer-half-features,tabular,sgd-hinge-a1.29e-06,0.8888888888888888,knn-k5-distance,0.9181286549707602,0.9156052631578946,0.013117968875244537,knn-k7-uniform,0.935672514619883
+heldout-diabetes-above-median,tabular,knn-k5-distance,0.6992481203007519,knn-k5-distance,0.6992481203007519,0.6937781954887219,0.08125786317966645,sgd-hinge-a1.29e-06,0.7669172932330827
+heldout-digits-noisy,image,knn-k7-distance,0.9404761904761905,knn-k5-distance,0.9428571428571428,0.9164273809523809,0.016740333252873343,knn-k5-distance,0.9428571428571428
+heldout-digits-noisy-parity,image,knn-k5-distance,0.9476190476190476,knn-k5-distance,0.9476190476190476,0.9101607142857142,0.04857645088316679,knn-k5-distance,0.9476190476190476
+heldout-digits-shifted,image,knn-k7-distance,0.9595238095238096,knn-k5-distance,0.9571428571428572,0.9404690476190476,0.01878179149881369,sgd-log_loss-a1.67e-05,0.9642857142857143
+heldout-iris-setosa,tabular,knn-k5-distance,1.0,knn-k5-distance,1.0,1.0,0.0,sgd-hinge-a1.29e-06,1.0
+heldout-text-computer-systems,text,sgd-hinge-a1.29e-06,1.0,knn-k5-distance,1.0,1.0,0.0,sgd-hinge-a1.29e-06,1.0
+heldout-text-religion,text,sgd-hinge-a1.29e-06,1.0,knn-k5-distance,1.0,1.0,0.0,sgd-hinge-a1.29e-06,1.0
+heldout-text-science,text,sgd-hinge-a1.29e-06,1.0,knn-k5-distance,1.0,1.0,0.0,sgd-hinge-a1.29e-06,1.0
+heldout-wine-class-zero,tabular,sgd-hinge-a1.29e-06,0.9814814814814815,knn-k5-distance,1.0,0.9944722222222222,0.008476193184973627,knn-k7-uniform,1.0

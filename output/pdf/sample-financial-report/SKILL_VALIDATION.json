@@ -1,0 +1,41 @@
+{
+  "overall": "PASS",
+  "validated_on": "2026-07-18",
+  "skill": ".agents/skills/financial-report-generator",
+  "checks": [
+    {
+      "name": "official-skill-validator",
+      "status": "PASS",
+      "detail": "Skill frontmatter, naming, and package structure are valid."
+    },
+    {
+      "name": "sample-financial-hard-gates",
+      "status": "PASS",
+      "detail": "All nine hard data, reconciliation, source-inventory, and commentary-reference gates passed."
+    },
+    {
+      "name": "fail-closed-rejection-test",
+      "status": "PASS",
+      "detail": "A balance-sheet difference of 2 against tolerance 1 was rejected with exit code 1."
+    },
+    {
+      "name": "html-and-pdf-verification",
+      "status": "PASS",
+      "detail": "Required sections, placeholders, offline-resource policy, print CSS, PDF existence, and page count passed."
+    },
+    {
+      "name": "pdf-metadata",
+      "status": "PASS",
+      "detail": "Five unencrypted Letter pages rendered by Chromium; file size 377683 bytes."
+    },
+    {
+      "name": "visual-review",
+      "status": "PASS",
+      "detail": "All five pages were rendered to PNG and inspected for clipping, overlaps, table splits, chart readability, headers, footers, and warning disclosure."
+    }
+  ],
+  "warnings": [
+    "The illustrative general-ledger source has no verified snapshot hash.",
+    "The illustrative operating-KPI source has no verified snapshot hash."
+  ]
+}

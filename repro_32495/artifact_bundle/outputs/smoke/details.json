@@ -1,0 +1,197 @@
+[
+  {
+    "task": "breast_cancer",
+    "seed": 0,
+    "single_no_feedback": [
+      {
+        "round": 1,
+        "proposal": {
+          "algorithm": "extra_trees",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 0.9297605140186915,
+        "feedback": "ok",
+        "valid_json": true
+      }
+    ],
+    "single_iterative": [
+      {
+        "round": 1,
+        "proposal": {
+          "algorithm": "hist_gradient_boosting",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 0.9375730140186915,
+        "feedback": "ok",
+        "valid_json": true
+      },
+      {
+        "round": 2,
+        "proposal": {
+          "algorithm": "random_forest",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 0.946918808411215,
+        "feedback": "ok",
+        "valid_json": true
+      }
+    ],
+    "multi_agent": [
+      {
+        "round": 1,
+        "proposal": {
+          "algorithm": "extra_trees",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 0.9297605140186915,
+        "feedback": "ok",
+        "valid_json": true
+      },
+      {
+        "round": 2,
+        "proposal": {
+          "algorithm": "random_forest",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 0.946918808411215,
+        "feedback": "ok",
+        "valid_json": true
+      }
+    ]
+  },
+  {
+    "task": "wine",
+    "seed": 0,
+    "single_no_feedback": [
+      {
+        "round": 1,
+        "proposal": {
+          "algorithm": "extra_trees",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 1.0,
+        "feedback": "ok",
+        "valid_json": true
+      }
+    ],
+    "single_iterative": [
+      {
+        "round": 1,
+        "proposal": {
+          "algorithm": "hist_gradient_boosting",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 1.0,
+        "feedback": "ok",
+        "valid_json": true
+      },
+      {
+        "round": 2,
+        "proposal": {
+          "algorithm": "random_forest",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 1.0,
+        "feedback": "ok",
+        "valid_json": true
+      }
+    ],
+    "multi_agent": [
+      {
+        "round": 1,
+        "proposal": {
+          "algorithm": "extra_trees",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 1.0,
+        "feedback": "ok",
+        "valid_json": true
+      },
+      {
+        "round": 2,
+        "proposal": {
+          "algorithm": "random_forest",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 1.0,
+        "feedback": "ok",
+        "valid_json": true
+      }
+    ]
+  },
+  {
+    "task": "digits",
+    "seed": 0,
+    "single_no_feedback": [
+      {
+        "round": 1,
+        "proposal": {
+          "algorithm": "extra_trees",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 0.9831157731157731,
+        "feedback": "ok",
+        "valid_json": true
+      }
+    ],
+    "single_iterative": [
+      {
+        "round": 1,
+        "proposal": {
+          "algorithm": "hist_gradient_boosting",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 0.9815449365449366,
+        "feedback": "ok",
+        "valid_json": true
+      },
+      {
+        "round": 2,
+        "proposal": {
+          "algorithm": "random_forest",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 0.9795195789535412,
+        "feedback": "ok",
+        "valid_json": true
+      }
+    ],
+    "multi_agent": [
+      {
+        "round": 1,
+        "proposal": {
+          "algorithm": "extra_trees",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 0.9831157731157731,
+        "feedback": "ok",
+        "valid_json": true
+      },
+      {
+        "round": 2,
+        "proposal": {
+          "algorithm": "random_forest",
+          "params": {},
+          "rationale": "mock smoke test"
+        },
+        "score": 0.9795195789535412,
+        "feedback": "ok",
+        "valid_json": true
+      }
+    ]
+  }
+]

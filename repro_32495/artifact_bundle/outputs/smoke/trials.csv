@@ -1,0 +1,10 @@
+task,seed,condition,score,algorithm
+breast_cancer,0,single_no_feedback,0.9297605140186915,extra_trees
+breast_cancer,0,single_iterative,0.946918808411215,random_forest
+breast_cancer,0,multi_agent,0.946918808411215,random_forest
+wine,0,single_no_feedback,1.0,extra_trees
+wine,0,single_iterative,1.0,hist_gradient_boosting
+wine,0,multi_agent,1.0,extra_trees
+digits,0,single_no_feedback,0.9831157731157731,extra_trees
+digits,0,single_iterative,0.9815449365449366,hist_gradient_boosting
+digits,0,multi_agent,0.9831157731157731,extra_trees

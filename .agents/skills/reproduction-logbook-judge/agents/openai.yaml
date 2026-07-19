@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reproduction Logbook Judge"
+  short_description: "Preflight scientific reproductions before publishing"
+  default_prompt: "Use $reproduction-logbook-judge to audit my local Trackio logbook and report likely judge failures."

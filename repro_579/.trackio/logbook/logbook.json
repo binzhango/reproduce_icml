@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "title": "Repro - Beyond Text-to-SQL: Can LLMs Really Debug Enterprise ETL SQL?",
+  "emoji": "🎯",
+  "space_id": "binzhango/repro-beyond-text-to-sql-squirrel",
+  "paper": {
+    "arxiv_id": "2601.18119",
+    "openreview_id": "4ltyJqAHMg"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-4ltyJqAHMg"
+  ],
+  "updated_at": "2026-07-17T19:29:13+00:00",
+  "root": {
+    "slug": "index",
+    "title": "Repro - Beyond Text-to-SQL: Can LLMs Really Debug Enterprise ETL SQL?",
+    "file": "pages/index.md",
+    "children": [
+      {
+        "slug": "claim-1-benchmark-construction-and-scale",
+        "title": "Claim 1: Benchmark construction and scale",
+        "file": "pages/claim-1-benchmark-construction-and-scale/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-2-claude-4-sonnet-headline-scores",
+        "title": "Claim 2: Claude-4-Sonnet headline scores",
+        "file": "pages/claim-2-claude-4-sonnet-headline-scores/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-3-open-model-results-and-below-20-pattern",
+        "title": "Claim 3: Open-model results and below-20 pattern",
+        "file": "pages/claim-3-open-model-results-and-below-20-pattern/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-4-enterprise-sql-complexity",
+        "title": "Claim 4: Enterprise SQL complexity",
+        "file": "pages/claim-4-enterprise-sql-complexity/page.md",
+        "children": []
+      },
+      {
+        "slug": "gpu-toy-debugging-experiment",
+        "title": "GPU toy debugging experiment",
+        "file": "pages/gpu-toy-debugging-experiment/page.md",
+        "children": []
+      },
+      {
+        "slug": "conclusion",
+        "title": "Conclusion",
+        "file": "pages/conclusion/page.md",
+        "children": []
+      },
+      {
+        "slug": "paper579-reproduction",
+        "title": "paper579-reproduction",
+        "file": "pages/paper579-reproduction/page.md",
+        "children": []
+      }
+    ]
+  },
+  "agent_view_tokens": 4583,
+  "revision": "1784316553445156000"
+}

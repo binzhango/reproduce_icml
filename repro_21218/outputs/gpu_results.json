@@ -1,0 +1,150 @@
+{
+  "calibration": {
+    "block_size": 2048,
+    "blocks": 128,
+    "dataset": "allenai/c4 train streaming"
+  },
+  "evaluation": {
+    "baseline": {
+      "blocks": 12,
+      "losses": [
+        2.295126438140869,
+        2.2035367488861084,
+        3.239827871322632,
+        1.6440260410308838,
+        1.7967426776885986,
+        1.4192553758621216,
+        1.6110793352127075,
+        2.9820127487182617,
+        2.583299398422241,
+        2.1827664375305176,
+        2.355149030685425,
+        2.8532135486602783
+      ],
+      "mean_loss": 2.2638363043467202,
+      "perplexity": 9.619923421921586
+    },
+    "block_size": 512,
+    "dataset": "allenai/c4 validation streaming",
+    "loss_delta": 0.7767325242360434,
+    "perplexity_ratio": 2.174355990200822,
+    "pruned": {
+      "blocks": 12,
+      "losses": [
+        2.5638904571533203,
+        2.5894105434417725,
+        4.014039039611816,
+        2.1739532947540283,
+        2.334996223449707,
+        2.4553768634796143,
+        2.880685329437256,
+        3.6973650455474854,
+        3.7172112464904785,
+        3.8021740913391113,
+        2.618373394012451,
+        3.639350414276123
+      ],
+      "mean_loss": 3.0405688285827637,
+      "perplexity": 20.91713811772839
+    }
+  },
+  "evidence_scope": "scaled proxy: released OLMoE-1B-active/7B-total, not paper Qwen3-30B-A3B",
+  "expert_sparsity": {
+    "approximate_counts": {
+      "experts_per_layer": 64,
+      "layers": 16,
+      "per_layer": [
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32
+      ],
+      "total": 512
+    },
+    "realized_fraction": 0.5,
+    "target_fraction": 0.5
+  },
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "gpu_count": 1,
+  "memory": {
+    "baseline_cuda_allocated_bytes": 13840421376,
+    "baseline_cuda_reserved_bytes": 13866369024,
+    "baseline_parameter_bytes": 13838323712,
+    "cuda_allocated_reduction_fraction": 0.46424941217049837,
+    "parameter_reduction_fraction": 0.4653998508804359,
+    "pruned_cuda_allocated_bytes": 7415013888,
+    "pruned_cuda_reserved_bytes": 13851688960,
+    "pruned_parameter_bytes": 7397969920,
+    "pruning_peak_allocated_bytes": 19507856896,
+    "pruning_peak_reserved_bytes": 23297261568
+  },
+  "method": "STEP, layer-wise fusion ranking, tau=0.5, bias calibration",
+  "model": "allenai/OLMoE-1B-7B-0125",
+  "pruning_seconds": 246.88018622400705,
+  "pruning_under_10_minutes": true,
+  "schema_version": 1,
+  "seed": 42,
+  "throughput": {
+    "baseline": {
+      "median_seconds": 0.3541672774590552,
+      "median_tokens_per_second": 1445.6445656789726,
+      "peak_cuda_allocated_bytes": 13907411456,
+      "peak_cuda_reserved_bytes": 14193524736,
+      "repeats": 12,
+      "seconds": [
+        0.35223956499248743,
+        0.3523791920160875,
+        0.3534230779623613,
+        0.35467174102086574,
+        0.355809657019563,
+        0.3542003429029137,
+        0.3527847749646753,
+        0.3565176980337128,
+        0.3541342120151967,
+        0.3558295709080994,
+        0.3558948809513822,
+        0.3507813719334081
+      ],
+      "tokens_per_repeat": 512
+    },
+    "pruned": {
+      "median_seconds": 0.2872243669698946,
+      "median_tokens_per_second": 1782.5785653264759,
+      "peak_cuda_allocated_bytes": 7472820736,
+      "peak_cuda_reserved_bytes": 14063501312,
+      "repeats": 12,
+      "seconds": [
+        0.2888332860311493,
+        0.2845763589721173,
+        0.2815230539999902,
+        0.28146223607473075,
+        0.28382773301564157,
+        0.28562332689762115,
+        0.287956777960062,
+        0.29335053206887096,
+        0.28909562493208796,
+        0.2872877789195627,
+        0.2886980769690126,
+        0.28716095502022654
+      ],
+      "tokens_per_repeat": 512
+    },
+    "speedup": 1.2330683541768486
+  },
+  "torch_version": "2.3.1",
+  "total_wall_seconds": 297.6905837059021,
+  "transformers_version": "4.55.3",
+  "upstream_commit": "03fdea9ac627bb8e6a3f1f5243a1eb6008605198"
+}

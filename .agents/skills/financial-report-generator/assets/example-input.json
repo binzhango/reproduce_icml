@@ -1,0 +1,99 @@
+{
+  "metadata": {
+    "company_name": "Northstar Components, Inc.",
+    "report_title": "Monthly Management Report",
+    "current_period": "June 2026",
+    "current_period_end": "2026-06-30",
+    "prior_period": "May 2026",
+    "prior_period_end": "2026-05-31",
+    "currency": "USD",
+    "scale": "thousands",
+    "page_size": "Letter",
+    "tolerance": "1"
+  },
+  "periods": {
+    "current": {
+      "income": {
+        "revenue": "12850",
+        "cost_of_revenue": "7710",
+        "operating_expenses": "3220",
+        "interest_expense": "180",
+        "tax_expense": "435"
+      },
+      "balance": {
+        "cash": "4680",
+        "accounts_receivable": "3910",
+        "inventory": "2840",
+        "other_current_assets": "570",
+        "property_plant_equipment": "8600",
+        "other_assets": "1400",
+        "accounts_payable": "2480",
+        "short_term_debt": "900",
+        "other_current_liabilities": "1550",
+        "long_term_debt": "5100",
+        "other_liabilities": "870",
+        "equity": "11100"
+      },
+      "cash_flow": {
+        "opening_cash": "4210",
+        "operating_cash_flow": "1180",
+        "investing_cash_flow": "-430",
+        "financing_cash_flow": "-280",
+        "closing_cash": "4680"
+      }
+    },
+    "prior": {
+      "income": {
+        "revenue": "11960",
+        "cost_of_revenue": "7415",
+        "operating_expenses": "3100",
+        "interest_expense": "175",
+        "tax_expense": "318"
+      },
+      "balance": {
+        "cash": "4210",
+        "accounts_receivable": "3620",
+        "inventory": "2970",
+        "other_current_assets": "540",
+        "property_plant_equipment": "8490",
+        "other_assets": "1370",
+        "accounts_payable": "2390",
+        "short_term_debt": "900",
+        "other_current_liabilities": "1480",
+        "long_term_debt": "5220",
+        "other_liabilities": "860",
+        "equity": "10350"
+      },
+      "cash_flow": {
+        "opening_cash": "3895",
+        "operating_cash_flow": "920",
+        "investing_cash_flow": "-355",
+        "financing_cash_flow": "-250",
+        "closing_cash": "4210"
+      }
+    }
+  },
+  "kpis": [
+    {"label": "On-time delivery", "current": "0.946", "prior": "0.927", "format": "percent"},
+    {"label": "Order backlog", "current": "18600", "prior": "17950", "format": "money"},
+    {"label": "Recordable incidents", "current": "1", "prior": "2", "format": "number"}
+  ],
+  "commentary": [
+    {
+      "title": "Commercial performance",
+      "text": "Revenue improved with shipment volume; pricing and mix should be reviewed alongside the sales detail.",
+      "kind": "management explanation",
+      "source_refs": ["income.revenue"]
+    },
+    {
+      "title": "Working capital",
+      "text": "Receivables increased while inventory declined, making collections the main working-capital review item.",
+      "kind": "data observation",
+      "source_refs": ["balance.accounts_receivable", "balance.inventory"]
+    }
+  ],
+  "sources": [
+    {"id": "gl-2026-06", "label": "June 2026 general-ledger close export", "as_of": "2026-06-30", "path": "finance/close/2026-06/gl-summary.csv"},
+    {"id": "ops-2026-06", "label": "June 2026 operating KPI snapshot", "as_of": "2026-06-30", "path": "operations/kpi/2026-06.json"}
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "space_id": "binzhango/repro-investigating-component-contributions",
+  "emoji": "🎯",
+  "created_at": "2026-07-18T02:09:49+00:00",
+  "paper": {
+    "arxiv_id": "N/A (OpenReview-only: FOfvTwBGUX)",
+    "openreview_id": "FOfvTwBGUX",
+    "paper_number": "32495",
+    "title": "Investigating Component Contributions in Multi-Agent ML Systems"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-FOfvTwBGUX"
+  ],
+  "last_page": "conclusion",
+  "local_path_artifacts": [
+    {
+      "path": "outputs/smoke/trials.csv",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_32495/outputs/smoke/trials.csv",
+      "size": 534,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "outputs/gpu/trials.csv",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_32495/outputs/gpu/trials.csv",
+      "size": 1485,
+      "artifact_type": "dataset"
+    }
+  ],
+  "local_artifacts": [
+    "icml-32495-component-ablation/gpu-proxy-raw-results:v0",
+    "icml-32495-component-ablation/icml-32495-reproduction-bundle:v0"
+  ],
+  "autosync": true,
+  "private": false,
+  "artifacts_bucket": "binzhango/repro-investigating-component-contributions-artifacts",
+  "local_dashboards": {}
+}

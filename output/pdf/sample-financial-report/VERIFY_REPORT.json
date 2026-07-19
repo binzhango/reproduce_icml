@@ -1,0 +1,40 @@
+{
+  "overall": "PASS",
+  "gates": [
+    {
+      "name": "html-exists",
+      "status": "PASS",
+      "detail": "output/pdf/sample-financial-report/report.html"
+    },
+    {
+      "name": "template-complete",
+      "status": "PASS",
+      "detail": "no unresolved placeholders"
+    },
+    {
+      "name": "required-sections",
+      "status": "PASS",
+      "detail": "all five sections present"
+    },
+    {
+      "name": "offline-resources",
+      "status": "PASS",
+      "detail": "no remote resources"
+    },
+    {
+      "name": "print-css",
+      "status": "PASS",
+      "detail": "paged-media rules present"
+    },
+    {
+      "name": "pdf-exists",
+      "status": "PASS",
+      "detail": "output/pdf/sample-financial-report/sample-financial-report.pdf (377683 bytes)"
+    },
+    {
+      "name": "pdf-page-count",
+      "status": "PASS",
+      "detail": "pages=5; expected=5"
+    }
+  ]
+}

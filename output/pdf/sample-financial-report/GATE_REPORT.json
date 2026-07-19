@@ -1,0 +1,77 @@
+{
+  "overall": "PASS",
+  "generated_at": "2026-07-18T22:19:42+00:00",
+  "gates": [
+    {
+      "name": "data-contract",
+      "status": "PASS",
+      "severity": "hard",
+      "detail": "canonical fields and decimal values are valid"
+    },
+    {
+      "name": "balance-sheet-current",
+      "status": "PASS",
+      "severity": "hard",
+      "detail": "difference=0; tolerance=1"
+    },
+    {
+      "name": "cash-rollforward-current",
+      "status": "PASS",
+      "severity": "hard",
+      "detail": "difference=0; tolerance=1"
+    },
+    {
+      "name": "cash-to-balance-current",
+      "status": "PASS",
+      "severity": "hard",
+      "detail": "difference=0; tolerance=1"
+    },
+    {
+      "name": "balance-sheet-prior",
+      "status": "PASS",
+      "severity": "hard",
+      "detail": "difference=0; tolerance=1"
+    },
+    {
+      "name": "cash-rollforward-prior",
+      "status": "PASS",
+      "severity": "hard",
+      "detail": "difference=0; tolerance=1"
+    },
+    {
+      "name": "cash-to-balance-prior",
+      "status": "PASS",
+      "severity": "hard",
+      "detail": "difference=0; tolerance=1"
+    },
+    {
+      "name": "source-inventory",
+      "status": "PASS",
+      "severity": "hard",
+      "detail": "source identifiers, labels, and dates are present"
+    },
+    {
+      "name": "source-hash-0",
+      "status": "WARN",
+      "severity": "warning",
+      "detail": "sources[0] has no verified snapshot hash"
+    },
+    {
+      "name": "source-hash-1",
+      "status": "WARN",
+      "severity": "warning",
+      "detail": "sources[1] has no verified snapshot hash"
+    },
+    {
+      "name": "commentary-references",
+      "status": "PASS",
+      "severity": "hard",
+      "detail": "all commentary references resolve"
+    }
+  ],
+  "warnings": [
+    "sources[0] has no verified snapshot hash",
+    "sources[1] has no verified snapshot hash"
+  ],
+  "errors": []
+}

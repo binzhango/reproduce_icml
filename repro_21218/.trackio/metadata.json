@@ -1,0 +1,37 @@
+{
+  "space_id": "binzhango/repro-less-token-more-signal-step",
+  "emoji": "🎯",
+  "created_at": "2026-07-18T09:58:45+00:00",
+  "paper": {
+    "openreview_id": "4iupzej9nT",
+    "arxiv_id": "not-available",
+    "submission_number": "21218",
+    "title": "Less Token, More Signal: MoE Expert Pruning via Critical Token Selection"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-4iupzej9nT"
+  ],
+  "last_page": "conclusion",
+  "local_path_artifacts": [
+    {
+      "path": "outputs/claim1_raw.csv",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_21218/outputs/claim1_raw.csv",
+      "size": 235,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "outputs/claim2_raw.csv",
+      "abs_path": "/Users/binzhang/vibe_coding_repo/reproduce_icml/repro_21218/outputs/claim2_raw.csv",
+      "size": 176,
+      "artifact_type": "dataset"
+    }
+  ],
+  "local_artifacts": [
+    "step-repro-21218-artifacts/reproduction-bundle:v0"
+  ],
+  "autosync": true,
+  "private": false,
+  "local_dashboards": {},
+  "artifacts_bucket": "binzhango/repro-less-token-more-signal-step-artifacts"
+}
